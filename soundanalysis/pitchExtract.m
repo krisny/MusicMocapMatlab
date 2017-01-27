@@ -355,12 +355,9 @@ for i = 1:size(corrs,2)
 end
 
 
-pitches = 1./(pitches*durationinseconds/length(a));
-pitchesDown = 1./(pitchesDown*durationinseconds/length(a));
-pitchesUp = 1./(pitchesUp*durationinseconds/length(a));
-%Do this instead: !!
-%1./(pitches(1:5)/k.sr)
-
+pitches = 1./(pitches/k.sr);
+pitchesDown = 1./(pitchesDown/k.sr);
+pitchesUp = 1./(pitchesUp/k.sr);
 
 
 
@@ -399,6 +396,12 @@ for i = 2:length(pitches)-1
     end
 end
 
+sum(pitchesDown < minf)
+sum(pitchesDown > maxf)
+sum(pitchesUp < minf)
+sum(pitchesUp > maxf)
+sum(pitches < minf)
+sum(pitches > maxf)
 
 %remove pitch values outside legal range.
 pitches(pitches < minf) = nan;
@@ -408,9 +411,13 @@ pitchesDown(pitchesDown > maxf) = nan;
 pitchesUp(pitchesUp < minf) = nan;
 pitchesUp(pitchesUp > maxf) = nan;
 
+%remove pitch values with correlation coefficients  below threshold
 pitches(acc < corrThreshold) = nan;
 pitchesDown(acc < corrThreshold) = nan;
 pitchesUp(acc < corrThreshold) = nan;
+
+%expand all nan-fields by one in each direction
+%initializing 3 temporary variables for pitches, up and down. 
 tmppitches = pitches;
 tpd=pitchesDown;
 tpu=pitchesUp;
@@ -430,12 +437,20 @@ for i = 2:length(pitches)-1
 end
 
 pitches = tmppitches;
+
 pitchesDown = tpd;
 pitchesUp= tpu;
 
-pitchesX = median([pitches; pitchesDown; pitchesUp], 1);
+for i =1:length(pitches)
+    if isnan(pitches(i))
+        if ~isnan(pitchesUp(i))
+            pitches(i)=pitchesUp(i);
+        elseif ~isnan(pitchesDown(i))
+            pitches(i)=pitchesDown(i);
+        end
+    end
+end
 
-%[maxs,ind]=max(mean(corrs,2));
 
 steps=0:((durationinseconds)/(size(corrs,2)-1)):durationinseconds;
 
