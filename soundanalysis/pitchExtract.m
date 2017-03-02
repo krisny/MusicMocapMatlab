@@ -7,6 +7,7 @@ function k = pitchExtract(varargin)
 %  - a string indicating a file name
 %  - a miraudio object (MIR toolbox)
 %  - a variable containing audio samples at 44100 Hz
+%  - the string 'record' records and analyses 10 seconds of audio from the microphone
 %
 % pitchExtract(d,varargin)
 %
@@ -320,10 +321,6 @@ maxOctaveJump = v.maxOctaveJump;
 a=a-mean(a);
 
 
-if nargin < 3
-    %default window setting = 1/100th of signal length
-    ws = floor(length(a)/100);
-end
 
 %compute maxlag (limit for xcorr function) from sr and lower frequency limit
 maxlag=round(1/minf*k.sr);
@@ -375,6 +372,7 @@ for i = 2:length(pitches)-1
 end
 
 
+
 %if a section shorter than maxOctaveJump changes octave, then change it:
 for i = 2:length(pitches)-1
     if abs(pitches(i-1)-pitches(i)) > min(pitches(i-1),pitches(i))-50
@@ -396,12 +394,6 @@ for i = 2:length(pitches)-1
     end
 end
 
-sum(pitchesDown < minf)
-sum(pitchesDown > maxf)
-sum(pitchesUp < minf)
-sum(pitchesUp > maxf)
-sum(pitches < minf)
-sum(pitches > maxf)
 
 %remove pitch values outside legal range.
 pitches(pitches < minf) = nan;
@@ -580,7 +572,7 @@ if v.playsound
     d = k.durations([k.durations(:,2) > v.plotlim(1) & k.durations(:,1) < v.plotlim(2)]',1:2);
     m = k.mtones(1,[k.durations(:,2) > v.plotlim(1) & k.durations(:,1) < v.plotlim(2)]')';
     
-    sinsignal = zeros(size(k.audio([round(v.plotlim(1)*44100):round(v.plotlim(2)*44100)])));
+    sinsignal = zeros(size(k.audio(round(v.plotlim(1)*44100):round(v.plotlim(2)*44100))));
     j = 1;
     
     if d(1,1) < v.plotlim(1)
@@ -595,15 +587,15 @@ if v.playsound
     
     sinsignal = smooth(sinsignal,30)*v.sinusvolume;
     
-    if length(length(k.audio([round(v.plotlim(1)*44100):round(v.plotlim(2)*44100)]))) < length(sinsignal)
-        sinsignal(1+length(k.audio([round(v.plotlim(1)*44100):round(v.plotlim(2)*44100)])):end) = [];
+    if length(length(k.audio(round(v.plotlim(1)*44100):round(v.plotlim(2)*44100)))) < length(sinsignal)
+        sinsignal(1+length(k.audio(round(v.plotlim(1)*44100):round(v.plotlim(2)*44100))):end) = [];
     end
     
     
     %sound(sinsignal,44100)
     %%
     sound([...
-        k.audio([round(v.plotlim(1)*44100):round(v.plotlim(2)*44100)]),...
+        k.audio(round(v.plotlim(1)*44100):round(v.plotlim(2)*44100)),...
         sinsignal],...
         44100)
     
