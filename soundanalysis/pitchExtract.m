@@ -125,7 +125,7 @@ for argnr=2:2:length(varargin)
     elseif strcmpi(varargin{argnr}, 'playsound')
         v.playsound=varargin{argnr+1};
     elseif strcmpi(varargin{argnr}, 'corrThresh')
-        v.corrTreshold=varargin{argnr+1};
+        v.corrThreshold=varargin{argnr+1};
     elseif strcmpi(varargin{argnr}, 'maxOctaveJump')
         v.maxOctaveJump=varargin{argnr+1};
     elseif strcmpi(varargin{argnr}, 'volume')
