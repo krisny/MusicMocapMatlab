@@ -160,6 +160,11 @@ playAnalysedAudio(k,v)
 
 k.mtones = k.mtones';
 
+if v.fundamental > 1
+    k.pitchesCents = 1200 * log2(k.pitches/v.fundamental);
+    k.mtonesCents = 1200 * log2(k.mtones/v.fundamental);
+end
+
 end
 
 
@@ -254,7 +259,7 @@ end
 
 %pitch of each tone is the median of all underlying pitches
 for i = 1:length(tones)
-    mtones(i) = median(tones{i})/fundamental;
+    mtones(i) = median(tones{i});%/fundamental;
 end
 
 
@@ -263,41 +268,33 @@ end
 clf
 
 
-subplot(4,1,1:3)
-plot(steps,pitches/fundamental) %raw pitch curve
 
+if fundamental ~= 1 %if a fundamental is specified, then use cents as unit
+    plot(steps,1200 * log2(pitches/fundamental));%/fundamental) %raw pitch curve
+    hold all
+    plot(steps,1200 * log2(smoothpitches/fundamental));%/fundamental) %pitch segmentation/analysis curve
+    ylabel('Cents')
+    line(durations',[1200 * log2(mtones/fundamental);1200 * log2(mtones/fundamental)],'Color','k','LineWidth',3) %segments
 
-hold all
-plot(steps,smoothpitches/fundamental) %pitch segmentation/analysis curve
+else
+    plot(steps,pitches); %raw pitch curve
+    hold all
+    plot(steps,smoothpitches); %pitch segmentation/analysis curve
+    ylabel('Frequencies')
+    line(durations',[mtones;mtones],'Color','k','LineWidth',3) %segments
+    set(gca,'yScale','log')
+end
 
-
-line(durations',[mtones;mtones],'Color','k','LineWidth',3) %segments
-set(gca,'yScale','log')
 xlabel('Time')
 
-if fundamental ~= 1
-    %set(gca,'YTick',sort([8/9 1 5/4 4/3 3/2 16/9 15/8 2 nthroot(2,12).^[ 4 5 7 10]]),'YMinorGrid','off')
-    set(gca,'YTick',[8/9 15/16 1 5/4 4/3 3/2 16/9 15/8 2],'YMinorGrid','off')
-    ylabel('Just intonation intervals')
-    ylim([0.8 2.1])
-else
-    ylabel('Frequencies')
-end
 
 grid on
 
 if isfield(v,'plotlim')
     xlim(v.plotlim)
 end
-subplot(4,1,4)
-plot(steps,rmss)
-line([0 steps(end)],[rmsThreshold rmsThreshold])
-set(gca,'yScale','log')
-ylim([0.001 0.2])
-if isfield(v,'plotlim')
-    xlim(v.plotlim)
-end
 
+    
 end
 
 
