@@ -333,7 +333,7 @@ corrs = zeros(maxlag*2+1,length(windowStarts));
 j=1;
 for i = windowStarts
     windowsignal = a(i:(i+ws-1)).*tukeywin(ws,0.7);
-    [corrs(:,j),~] = xcorr(windowsignal,windowsignal,'coeff',maxlag);    
+    [corrs(:,j),~] = xcorr(windowsignal,windowsignal,maxlag,'coeff');    
     
     %tmp solution for calculating rms:
     rmss(j)=rms(smooth(windowsignal,5));
