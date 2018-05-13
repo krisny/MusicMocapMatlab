@@ -39,7 +39,7 @@ function k = pitchExtract(varargin)
 %                         (default 15)
 %	'filter2'           - Filter length for segmentation algorithm
 %                         (default 21)
-%	'toneLengthThresh'  - Threshold for segmentation algorithm (default 10)
+%	'toneLengthThresh'  - Threshold for segmentation algorithm (default 22)
 %	'rmsThresh'         - Thresholding RMS envelope in segmentation
 %                         algorithm (default 0.005)
 %	'corrThresh'        - Thresholding autocorrelation coefficient for
@@ -87,7 +87,7 @@ v.medianFilterLength1 = 15;
 v.derivTreshold1 = 1;
 v.medianFilterLength2 = 21;
 v.derivTreshold2 = 5;
-v.toneLengthTreshold = 10;
+v.toneLengthTreshold = 22;
 v.rmsThreshold = 0.005;
 v.ws = round(k.sr/10);
 v.hop = 0.1;
