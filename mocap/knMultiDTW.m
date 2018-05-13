@@ -2,7 +2,6 @@ function warpedData = knMultiDTW(varargin)
 % Dynamic time warping function for multiple input signals. All signals are
 % warped to the timeline of one of the other input signals.
 %
-% Use a cell array as input, where each cell contains a time series. 
 % Last argument specifies sync array number (Default = 1st)
 
 % Checking if an argument is given to specify which signal to sync to
@@ -13,10 +12,6 @@ else
     warpIndex = 1; %default: first input signal
 end
 
-%converting to cell array if a normal array is used as input signal (rather than cell array)
-if iscell(varargin{1})
-    varargin = varargin{1};
-end
 
 % initializing output matrix
 warpedData = zeros(length(varargin),length(varargin{warpIndex}));
