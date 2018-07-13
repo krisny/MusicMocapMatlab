@@ -385,16 +385,20 @@ if p.animate %20150720 / HJ: in animate case, set figure and axes outside main l
 end
 
 if isfield(p,'floorimage')
+    if ~isempty(p.floorimage)
         floorimg = imread(p.floorimage);
         floorlevel = minz;
         floorimgsize = size(floorimg); floorimgsize(end)=[];
         floorscale = max([maxx-minx,maxy-miny,maxz-minz])/min(floorimgsize);
+    end
 end
 if isfield(p,'wallimage')
+   if ~isempty(p.wallimage)
         wallimg = imread(p.wallimage);
         wallimgsize = size(wallimg); wallimgsize(end)=[];
         wallscale = max([maxx-minx,maxy-miny,maxz-minz])/min(wallimgsize);
         wallimg = flip(wallimg ,1);
+   end
 end
 
 for k=1:size(x,1) % main loop
@@ -454,6 +458,7 @@ for k=1:size(x,1) % main loop
          
     % plot marker-to-marker connections
     if ~isempty(p.conn)
+        if 0
         for m=1:size(p.conn,1)
             %if x(k,p.conn(m,1))*x(k,p.conn(m,2))~=0
             if isfinite(x(k,p.conn(m,1))*x(k,p.conn(m,2)))
@@ -461,6 +466,22 @@ for k=1:size(x,1) % main loop
                 %plot3([x(k,p.conn(m,1)) x(k,p.conn(m,2))], [z(k,p.conn(m,1)) z(k,p.conn(m,2))],[y(k,p.conn(m,1)) y(k,p.conn(m,2))], '-','LineWidth', p.cwidth(m));
             end
         end
+        else
+            for m=1:size(p.conn,1)
+                
+%                c1 = mapar.conn(i,1);
+%                c2 = mapar.conn(i,2);
+
+                r1 = [x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))];
+                r2 = [x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))];
+                [pcx,pcy,pcz] = cylinder2P(p.cwidth*0.002*maxxyz,20,r1,r2);
+                tmpbone = surf(pcx,pcy,pcz);
+                tmpbone.EdgeColor = 'none';
+                tmpbone.FaceColor = p.colors(3);
+            end
+            light('Position',[1 2 1.5])
+        end
+        
     end
     grid on
     % plot midpoint-to-midpoint connections
@@ -496,6 +517,7 @@ for k=1:size(x,1) % main loop
     
     
     % plot markers
+    if 0
     for m=1:size(x,2)
         %if x(k,m)~=0 & ~isnan(x(k,m)) % if marker visible
         if isfinite(x(k,m)) % if marker visible
@@ -523,6 +545,27 @@ for k=1:size(x,1) % main loop
 
 
     end
+    else
+       
+        [px,py,pz] = sphere(50);                % generate coordinates for a 50 x 50 sphere
+
+        px=px*p.msize*0.002*maxxyz;
+        py=py*p.msize*0.002*maxxyz;
+        pz=pz*p.msize*0.002*maxxyz;
+        for m=1:size(x,2)
+
+            sEarth(m) = surface(px+x(k,m), py+y(k,m),flip(pz)+z(k,m));   
+            sEarth(m).FaceColor = p.colors(2); 
+            sEarth(m).EdgeColor = 'none';              % remove surface edge color
+            %sEarth(i).CData = floorimg;                   % set color data 
+
+        end
+
+        
+        
+    end
+    
+    
     if p.showfnum
         h=text(minx+0.95*(maxx-minx), miny+0.05*(maxy-miny), minz+0.05*(maxz-minz), num2str(k),...
             'HorizontalAlignment','Right','FontSize',12,'FontWeight','bold');
