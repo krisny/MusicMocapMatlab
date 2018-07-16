@@ -36,6 +36,8 @@ function mcplot3Dframe(d, n, p, proj)
 % ? Part of the Motion Capture Toolbox, Copyright ?2008,
 % University of Jyvaskyla, Finland
 
+
+
 par=[];
 
 if isfield(d,'type') && strcmp(d.type, 'MoCap data') || isfield(d,'type') && strcmp(d.type, 'norm data') || isfield(d,'type') && strcmp(d.type, 'segm data')
@@ -342,7 +344,7 @@ end
 
 
     tmp=d.data(:,1:3:end);tmp=tmp(:); maxx=nanmax(tmp); minx=nanmin(tmp);
-    tmp=d.data(:,2:3:end);tmp=tmp(:); maxy=nanmax(tmp); miny=nanmin(tmp);
+    tmp=d.data(:,2:3:end);tmp=tmp(:); maxy=nanmax(tmp); miny=nanmin(tmp);%miny=miny-abs(miny*1.2);
     tmp=d.data(:,3:3:end);tmp=tmp(:); maxz=nanmax(tmp); minz=nanmin(tmp);
     midx = (maxx+minx)/2;
     midy = (maxy+miny)/2;
@@ -359,7 +361,8 @@ end
 
 
 %campos = ones(1,3).*[maxx,maxy,maxz]*1.5
-campos = [4 20 2].*[maxx,maxy,maxz]; %camera position
+campos = [maxx,maxy,maxz].*[14 20 4]; %camera position
+lightPos = [maxx,maxy,maxz].*[1.5 20 4];
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
@@ -417,7 +420,7 @@ for k=1:size(x,1) % main loop
         daspect([1 1 1])
         hold on
         %set(gcf, 'color', bgcol);
-        view(0,90);
+        view(10,150);
         %colormap([ones(64,1) zeros(64,1) zeros(64,1)]);
         fignr=fignr+1;
     end
@@ -479,7 +482,7 @@ for k=1:size(x,1) % main loop
                 tmpbone.EdgeColor = 'none';
                 tmpbone.FaceColor = p.colors(3);
             end
-            light('Position',[1 2 1.5])
+            light('Position',lightPos)
         end
         
     end
@@ -552,19 +555,32 @@ for k=1:size(x,1) % main loop
         px=px*p.msize*0.002*maxxyz;
         py=py*p.msize*0.002*maxxyz;
         pz=pz*p.msize*0.002*maxxyz;
+        
         for m=1:size(x,2)
 
             sEarth(m) = surface(px+x(k,m), py+y(k,m),flip(pz)+z(k,m));   
             sEarth(m).FaceColor = p.colors(2); 
             sEarth(m).EdgeColor = 'none';              % remove surface edge color
             %sEarth(i).CData = floorimg;                   % set color data 
+            
+            SP = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
+            line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
+            SP = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
+            line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
+            SP = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,m) y(k,m) z(k,m)]);
+            line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
 
+            
         end
 
         
         
     end
     
+    
+    
+    
+    %axis off
     
     if p.showfnum
         h=text(minx+0.95*(maxx-minx), miny+0.05*(maxy-miny), minz+0.05*(maxz-minz), num2str(k),...
@@ -608,6 +624,8 @@ end
 
 return;
 
+end
+
 
 function colorar=lookup_l(colorstr)
 if strcmp(colorstr, 'k')
@@ -629,6 +647,15 @@ elseif strcmp(colorstr, 'c')
 end
 
 return;
+
+end
+
+function SP = shadowPoint(planeNormalVec,pointOnPlane,p1,p2)
+
+    SP = p1+(-dot(planeNormalVec,p1 - pointOnPlane) / dot(planeNormalVec,p2-p1)).*(p2-p1);
+
+end
+
 
 
 
