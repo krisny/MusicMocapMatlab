@@ -363,7 +363,7 @@ end
 
 %campos = ones(1,3).*[maxx,maxy,maxz]*1.5
 campos = [maxx,maxy,maxz].*[14 20 4]; %camera position
-lightPos = [maxx,maxy,maxz].*[40 6 10];
+lightPos = [maxx,maxy,maxz].*[2 6 20];
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
