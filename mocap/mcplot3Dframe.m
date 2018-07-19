@@ -363,7 +363,7 @@ end
 
 %campos = ones(1,3).*[maxx,maxy,maxz]*1.5
 campos = [maxx,maxy,maxz].*[14 20 4]; %camera position
-lightPos = [maxx,maxy,maxz].*[7 60 10];
+lightPos = [maxx,maxy,maxz].*[40 6 10];
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
@@ -509,10 +509,11 @@ for k=1:size(x,1) % main loop
             
         if ~noPatchShadow
             for q = 1:length(SPaz)
-                sx= patch([SPax(1,q)+[-0.04 0.04],SPbx(1,q)-[-0.04 0.04]],[SPax(2,q)-[-0.04 0.04],SPbx(2,q)+[-0.04 0.04]],[SPax(3,q)-[-0.04 0.04],SPbx(3,q)+[-0.04 0.04]],'k','EdgeColor','none');
-                sy= patch([SPay(1,q)+[-0.04 0.04],SPby(1,q)-[-0.04 0.04]],[SPay(2,q)-[-0.04 0.04],SPby(2,q)+[-0.04 0.04]],[SPay(3,q)+[-0.04 0.04],SPby(3,q)-[-0.04 0.04]],'k','EdgeColor','none');
-                sz= patch([SPaz(1,q)+[-0.04 0.04],SPbz(1,q)-[-0.04 0.04]],[SPaz(2,q)-[-0.04 0.04],SPbz(2,q)+[-0.04 0.04]],[SPaz(3,q)+[-0.04 0.04],SPbz(3,q)-[-0.04 0.04]],'k','EdgeColor','none');
-                alpha(sx,0.3),alpha(sy,0.3),alpha(sz,0.3),
+                sx= patch([SPax(1,q)+[-0.04 0.04],SPbx(1,q)-[-0.04 0.04]],[SPax(2,q)+[0 0],       SPbx(2,q)+[0 0]],       [SPax(3,q)-[-0.04 0.04],SPbx(3,q)+[-0.04 0.04]],'k','EdgeColor','none');alpha(sx,0.3);
+                sy= patch([SPay(1,q)+[0 0],       SPby(1,q)-[0 0]],       [SPay(2,q)+[-0.04 0.04],SPby(2,q)-[-0.04 0.04]],[SPay(3,q)+[-0.04 0.04],SPby(3,q)-[-0.04 0.04]],'k','EdgeColor','none');alpha(sy,0.3);
+                sz= patch([SPaz(1,q)+[-0.04 0.04],SPbz(1,q)-[-0.04 0.04]],[SPaz(2,q)-[-0.04 0.04],SPbz(2,q)+[-0.04 0.04]],[SPaz(3,q)+[0 0],       SPbz(3,q)+[0 0]       ],'k','EdgeColor','none');alpha(sz,0.3);
+                
+                
             end
             
             
