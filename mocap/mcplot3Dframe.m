@@ -37,6 +37,7 @@ function mcplot3Dframe(d, n, p, proj)
 % University of Jyvaskyla, Finland
 
 
+noPatchShadow = 0;
 
 par=[];
 
@@ -362,7 +363,7 @@ end
 
 %campos = ones(1,3).*[maxx,maxy,maxz]*1.5
 campos = [maxx,maxy,maxz].*[14 20 4]; %camera position
-lightPos = [maxx,maxy,maxz].*[1.5 20 4];
+lightPos = [maxx,maxy,maxz].*[7 60 10];
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
@@ -481,8 +482,46 @@ for k=1:size(x,1) % main loop
                 tmpbone = surf(pcx,pcy,pcz);
                 tmpbone.EdgeColor = 'none';
                 tmpbone.FaceColor = p.colors(3);
+                
+                
+        if noPatchShadow
+    
+            SPa = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+            SPb = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+            line([SPa(1),SPb(1)],[SPa(2),SPb(2)],[SPa(3),SPb(3)],'Color','k','LineWidth',2)
+            SPa = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+            SPb = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+            line([SPa(1),SPb(1)],[SPa(2),SPb(2)],[SPa(3),SPb(3)],'Color','k','LineWidth',2)
+            SPa = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+            SPb = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+            line([SPa(1),SPb(1)],[SPa(2),SPb(2)],[SPa(3),SPb(3)],'Color','k','LineWidth',2)
+            
+        else
+            SPax(:,m) = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+            SPbx(:,m) = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+            SPay(:,m) = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+            SPby(:,m) = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+            SPaz(:,m) = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+            SPbz(:,m) = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+        end
+        
             end
+            
+        if ~noPatchShadow
+            for q = 1:length(SPaz)
+                sx= patch([SPax(1,q)+[-0.04 0.04],SPbx(1,q)-[-0.04 0.04]],[SPax(2,q)-[-0.04 0.04],SPbx(2,q)+[-0.04 0.04]],[SPax(3,q)-[-0.04 0.04],SPbx(3,q)+[-0.04 0.04]],'k','EdgeColor','none');
+                sy= patch([SPay(1,q)+[-0.04 0.04],SPby(1,q)-[-0.04 0.04]],[SPay(2,q)-[-0.04 0.04],SPby(2,q)+[-0.04 0.04]],[SPay(3,q)+[-0.04 0.04],SPby(3,q)-[-0.04 0.04]],'k','EdgeColor','none');
+                sz= patch([SPaz(1,q)+[-0.04 0.04],SPbz(1,q)-[-0.04 0.04]],[SPaz(2,q)-[-0.04 0.04],SPbz(2,q)+[-0.04 0.04]],[SPaz(3,q)+[-0.04 0.04],SPbz(3,q)-[-0.04 0.04]],'k','EdgeColor','none');
+                alpha(sx,0.3),alpha(sy,0.3),alpha(sz,0.3),
+            end
+            
+            
+        end
+            
+            
             light('Position',lightPos)
+            
+            
         end
         
     end
@@ -563,17 +602,30 @@ for k=1:size(x,1) % main loop
             sEarth(m).EdgeColor = 'none';              % remove surface edge color
             %sEarth(i).CData = floorimg;                   % set color data 
             
+            if noPatchShadow
             SP = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
             line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
             SP = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
             line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
             SP = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,m) y(k,m) z(k,m)]);
             line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
-
+            else
+                SPx(:,m) = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
+                SPy(:,m) = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,m) y(k,m) z(k,m)]);                
+                SPz(:,m) = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,m) y(k,m) z(k,m)]);
+            end
+                
             
         end
-
         
+        if ~noPatchShadow
+        %    sx=patch(SPx(1,:),SPx(2,:),SPx(3,:),'k');
+        %    sy=patch(SPy(1,:),SPy(2,:),SPy(3,:),'k');
+        %    sz=patch(SPz(1,:),SPz(2,:),SPz(3,:),'k');
+        %    alpha(sx,0.5)
+        %    alpha(sy,0.5)
+        %    alpha(sz,0.5)
+        end
         
     end
     
