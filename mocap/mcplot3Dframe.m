@@ -38,6 +38,8 @@ function mcplot3Dframe(d, n, p, proj)
 
 
 noPatchShadow = 0;
+shadowAlpha = 0.4;
+sw = 0.03; %shadow width
 
 par=[];
 
@@ -363,7 +365,7 @@ end
 
 %campos = ones(1,3).*[maxx,maxy,maxz]*1.5
 campos = [maxx,maxy,maxz].*[14 20 4]; %camera position
-lightPos = [maxx,maxy,maxz].*[2 6 20];
+lightPos = [maxx,maxy,maxz].*[32 16 20];
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
@@ -509,13 +511,12 @@ for k=1:size(x,1) % main loop
             
         if ~noPatchShadow
             for q = 1:length(SPaz)
-                sx= patch([SPax(1,q)+[-0.04 0.04],SPbx(1,q)-[-0.04 0.04]],[SPax(2,q)+[0 0],       SPbx(2,q)+[0 0]],       [SPax(3,q)-[-0.04 0.04],SPbx(3,q)+[-0.04 0.04]],'k','EdgeColor','none');alpha(sx,0.3);
-                sy= patch([SPay(1,q)+[0 0],       SPby(1,q)-[0 0]],       [SPay(2,q)+[-0.04 0.04],SPby(2,q)-[-0.04 0.04]],[SPay(3,q)+[-0.04 0.04],SPby(3,q)-[-0.04 0.04]],'k','EdgeColor','none');alpha(sy,0.3);
-                sz= patch([SPaz(1,q)+[-0.04 0.04],SPbz(1,q)-[-0.04 0.04]],[SPaz(2,q)-[-0.04 0.04],SPbz(2,q)+[-0.04 0.04]],[SPaz(3,q)+[0 0],       SPbz(3,q)+[0 0]       ],'k','EdgeColor','none');alpha(sz,0.3);
-                
-                
+                sx= patch([SPax(1,q)+pm(sw)   ,SPbx(1,q)-pm(sw)]   ,[SPax(2,q)+pm(sw*.1),SPbx(2,q)-pm(sw*.1)],[SPax(3,q)-pm(sw)   ,SPbx(3,q)+pm(sw)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                sy= patch([SPay(1,q)+pm(sw*.1),SPby(1,q)-pm(sw*.1)],[SPay(2,q)+pm(sw)   ,SPby(2,q)-pm(sw)   ],[SPay(3,q)+pm(sw)   ,SPby(3,q)-pm(sw)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                sz= patch([SPaz(1,q)+pm(sw)   ,SPbz(1,q)-pm(sw)]   ,[SPaz(2,q)-pm(sw)   ,SPbz(2,q)+pm(sw)   ],[SPaz(3,q)+pm(sw*.1),SPbz(3,q)-pm(sw*.1)],'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                %make function that calculates position of rectangle based
+                %on limb vector and orientation of limb shadow.
             end
-            
             
         end
             
@@ -709,6 +710,11 @@ function SP = shadowPoint(planeNormalVec,pointOnPlane,p1,p2)
 
 end
 
+function plusAndMinus = pm(x)
+
+    plusAndMinus = [-x, x];
+
+end
 
 
 
