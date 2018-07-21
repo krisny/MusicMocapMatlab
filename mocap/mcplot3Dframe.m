@@ -365,7 +365,7 @@ end
 
 %campos = ones(1,3).*[maxx,maxy,maxz]*1.5
 campos = [maxx,maxy,maxz].*[14 20 4]; %camera position
-lightPos = [maxx,maxy,maxz].*[32 16 20];
+lightPos = [maxx,maxy,maxz].*[2 26 5];
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
@@ -511,11 +511,12 @@ for k=1:size(x,1) % main loop
             
         if ~noPatchShadow
             for q = 1:length(SPaz)
-                sx= patch([SPax(1,q)+pm(sw)   ,SPbx(1,q)-pm(sw)]   ,[SPax(2,q)+pm(sw*.1),SPbx(2,q)-pm(sw*.1)],[SPax(3,q)-pm(sw)   ,SPbx(3,q)+pm(sw)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
-                sy= patch([SPay(1,q)+pm(sw*.1),SPby(1,q)-pm(sw*.1)],[SPay(2,q)+pm(sw)   ,SPby(2,q)-pm(sw)   ],[SPay(3,q)+pm(sw)   ,SPby(3,q)-pm(sw)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
-                sz= patch([SPaz(1,q)+pm(sw)   ,SPbz(1,q)-pm(sw)]   ,[SPaz(2,q)-pm(sw)   ,SPbz(2,q)+pm(sw)   ],[SPaz(3,q)+pm(sw*.1),SPbz(3,q)-pm(sw*.1)],'k','EdgeColor','none');alpha(sz,shadowAlpha);
-                %make function that calculates position of rectangle based
-                %on limb vector and orientation of limb shadow.
+                qqq = line2rect([SPax(1,q),SPax(3,q)],[SPbx(1,q),SPbx(3,q)],p.cwidth(q)*0.002*maxxyz);
+                sx = patch(qqq(:,1),[SPax(2,q)+pm(sw*.1),SPbx(2,q)-pm(sw*.1)],qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                qqq = line2rect([SPay(2,q),SPay(3,q)],[SPby(2,q),SPby(3,q)],p.cwidth(q)*0.002*maxxyz);
+                sy = patch([SPay(1,q)+pm(sw*.1),SPby(1,q)-pm(sw*.1)],qqq(:,1),qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                qqq = line2rect([SPaz(1,q),SPaz(2,q)],[SPbz(1,q),SPbz(2,q)],p.cwidth(q)*0.002*maxxyz);
+                sz = patch(qqq(:,1),qqq([2 1 4 3],2),[SPaz(3,q)+pm(sw*.1),SPbz(3,q)-pm(sw*.1)]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
             end
             
         end
@@ -716,5 +717,13 @@ function plusAndMinus = pm(x)
 
 end
 
+
+function rectCoordinates = line2rect(p1,p2,w)
+    
+    %can be optimised
+    [xx,yy]=pol2cart(0.5*pi-mod(cart2pol(p2(1)-p1(1),p2(2)-p1(2)),pi),w); 
+    rectCoordinates = [p1+[xx yy];p1-[xx yy];p2-[xx yy];p2+[xx yy]];
+    
+end
 
 
