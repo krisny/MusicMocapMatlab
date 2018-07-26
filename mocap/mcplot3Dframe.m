@@ -37,9 +37,7 @@ function mcplot3Dframe(d, n, p, proj)
 % University of Jyvaskyla, Finland
 
 
-noPatchShadow = 0;
-shadowAlpha = 0.4;
-sw = 0.03; %shadow width
+shadowAlpha = 0.25;
 
 par=[];
 
@@ -361,6 +359,7 @@ end
     minz = minz-abs(minz*0.05);
     
     maxxyz = max([maxx,maxy,maxz]);
+    om = round(max([maxx,maxy,maxz]-[minx,miny,minz])); %order of magnitude.. used for bone widths, marker sizes and shados widths
 
 
 %campos = ones(1,3).*[maxx,maxy,maxz]*1.5
@@ -464,69 +463,37 @@ for k=1:size(x,1) % main loop
          
     % plot marker-to-marker connections
     if ~isempty(p.conn)
-        if 0
-        for m=1:size(p.conn,1)
-            %if x(k,p.conn(m,1))*x(k,p.conn(m,2))~=0
-            if isfinite(x(k,p.conn(m,1))*x(k,p.conn(m,2)))
-                plot3([x(k,p.conn(m,1)) x(k,p.conn(m,2))], [y(k,p.conn(m,1)) y(k,p.conn(m,2))], [z(k,p.conn(m,1)) z(k,p.conn(m,2))], '-','Color',ccol(m,:),'LineWidth', p.cwidth(m));
-                %plot3([x(k,p.conn(m,1)) x(k,p.conn(m,2))], [z(k,p.conn(m,1)) z(k,p.conn(m,2))],[y(k,p.conn(m,1)) y(k,p.conn(m,2))], '-','LineWidth', p.cwidth(m));
-            end
-        end
-        else
             for m=1:size(p.conn,1)
-                
-%                c1 = mapar.conn(i,1);
-%                c2 = mapar.conn(i,2);
 
                 r1 = [x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))];
                 r2 = [x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))];
-                [pcx,pcy,pcz] = cylinder2P(p.cwidth*0.002*maxxyz,20,r1,r2);
+                [pcx,pcy,pcz] = cylinder2P(p.cwidth*0.003*om,15,r1,r2);
                 tmpbone = surf(pcx,pcy,pcz);
                 tmpbone.EdgeColor = 'none';
                 tmpbone.FaceColor = p.colors(3);
                 
-                
-        if noPatchShadow
-    
-            SPa = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-            SPb = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-            line([SPa(1),SPb(1)],[SPa(2),SPb(2)],[SPa(3),SPb(3)],'Color','k','LineWidth',2)
-            SPa = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-            SPb = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-            line([SPa(1),SPb(1)],[SPa(2),SPb(2)],[SPa(3),SPb(3)],'Color','k','LineWidth',2)
-            SPa = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-            SPb = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-            line([SPa(1),SPb(1)],[SPa(2),SPb(2)],[SPa(3),SPb(3)],'Color','k','LineWidth',2)
-            
-        else
-            SPax(:,m) = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-            SPbx(:,m) = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-            SPay(:,m) = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-            SPby(:,m) = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-            SPaz(:,m) = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-            SPbz(:,m) = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-        end
+				SPax = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+                SPbx = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+                SPay = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+                SPby = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+                SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+                SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
         
+                qqq = line2rect([SPax(1),SPax(3)],[SPbx(1),SPbx(3)],p.cwidth(m)*0.003*om);
+                sx = patch(qqq(:,1),[SPax(2)+pm(p.cwidth(m)*0.005*om*0.5),SPbx(2)-pm(p.cwidth(m)*0.005*om*0.5)],qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                qqq = line2rect([SPay(2),SPay(3)],[SPby(2),SPby(3)],p.cwidth(m)*0.003*om);
+                sy = patch([SPay(1)+pm(p.cwidth(m)*0.005*om*0.5),SPby(1)-pm(p.cwidth(m)*0.005*om*0.5)],qqq(:,1),qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                qqq = line2rect([SPaz(1),SPaz(2)],[SPbz(1),SPbz(2)],p.cwidth(m)*0.003*om);
+                sz = patch(qqq(:,1),qqq([2 1 4 3],2),[SPaz(3)+pm(p.cwidth(m)*0.005*om*0.5),SPbz(3)-pm(p.cwidth(m)*0.005*om*0.5)]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+
             end
             
-        if ~noPatchShadow
-            for q = 1:length(SPaz)
-                qqq = line2rect([SPax(1,q),SPax(3,q)],[SPbx(1,q),SPbx(3,q)],p.cwidth(q)*0.002*maxxyz);
-                sx = patch(qqq(:,1),[SPax(2,q)+pm(sw*.1),SPbx(2,q)-pm(sw*.1)],qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
-                qqq = line2rect([SPay(2,q),SPay(3,q)],[SPby(2,q),SPby(3,q)],p.cwidth(q)*0.002*maxxyz);
-                sy = patch([SPay(1,q)+pm(sw*.1),SPby(1,q)-pm(sw*.1)],qqq(:,1),qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
-                qqq = line2rect([SPaz(1,q),SPaz(2,q)],[SPbz(1,q),SPbz(2,q)],p.cwidth(q)*0.002*maxxyz);
-                sz = patch(qqq(:,1),qqq([2 1 4 3],2),[SPaz(3,q)+pm(sw*.1),SPbz(3,q)-pm(sw*.1)]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
-            end
-            
-        end
             
             
-            light('Position',lightPos)
             
+
             
-        end
-        
+       
     end
     grid on
     % plot midpoint-to-midpoint connections
@@ -562,76 +529,21 @@ for k=1:size(x,1) % main loop
     
     
     % plot markers
-    if 0
-    for m=1:size(x,2)
-        %if x(k,m)~=0 & ~isnan(x(k,m)) % if marker visible
-        if isfinite(x(k,m)) % if marker visible
-                plot3(x(k,m),y(k,m),z(k,m),'o','MarkerSize',p.msize(min(m,length(p.msize))),'MarkerEdgeColor',mcol(m,:),'MarkerFaceColor','k')
-            if p.showmnum
-                if isempty(p.numbers)
-                    h=text(x(k,m),y(k,m),z(k,m)+maxxyz/80,num2str(m));
-                    set(h,'FontSize',16);
-                    set(h,'Color',ncol(m,:))
-                else
-                    
-                     %if ismember(m, p.numbers) %FIX BB20120326: redefinining numbers plotting (mcmerge) 
-                     if m<=length(p.numbers)
-                         if isnan(p.numbers(m)) %NaN numbers not plotted
-                         else
-                             h=text(x(k,m),y(k,m),z(k,m)+maxxyz/50,num2str(p.numbers(m)));
-                             set(h,'FontSize',16);
-                             set(h,'Color',ncol(m,:))
-                         end
-                    end
-                end
-            end
-%            axis off
-        end
 
-
-    end
-    else
        
-        [px,py,pz] = sphere(50);                % generate coordinates for a 50 x 50 sphere
+        [px,py,pz] = sphere(15);                % generate coordinates for a 50 x 50 sphere
 
-        px=px*p.msize*0.002*maxxyz;
-        py=py*p.msize*0.002*maxxyz;
-        pz=pz*p.msize*0.002*maxxyz;
+        px=px*p.msize*0.0015*om;
+        py=py*p.msize*0.0015*om;
+        pz=pz*p.msize*0.0015*om;
         
         for m=1:size(x,2)
 
-            sEarth(m) = surface(px+x(k,m), py+y(k,m),flip(pz)+z(k,m));   
-            sEarth(m).FaceColor = p.colors(2); 
-            sEarth(m).EdgeColor = 'none';              % remove surface edge color
-            %sEarth(i).CData = floorimg;                   % set color data 
-            
-            if noPatchShadow
-            SP = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
-            line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
-            SP = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
-            line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
-            SP = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,m) y(k,m) z(k,m)]);
-            line(SP(1),SP(2),SP(3),'Marker','o','MarkerFaceColor','k','MarkerSize',4,'color','k')
-            else
-                SPx(:,m) = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,m) y(k,m) z(k,m)]);
-                SPy(:,m) = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,m) y(k,m) z(k,m)]);                
-                SPz(:,m) = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,m) y(k,m) z(k,m)]);
-            end
-                
+            markerBall = surface(px+x(k,m), py+y(k,m),flip(pz)+z(k,m));   
+            markerBall.FaceColor = p.colors(2); 
+            markerBall.EdgeColor = 'none';              % remove surface edge color
             
         end
-        
-        if ~noPatchShadow
-        %    sx=patch(SPx(1,:),SPx(2,:),SPx(3,:),'k');
-        %    sy=patch(SPy(1,:),SPy(2,:),SPy(3,:),'k');
-        %    sz=patch(SPz(1,:),SPz(2,:),SPz(3,:),'k');
-        %    alpha(sx,0.5)
-        %    alpha(sy,0.5)
-        %    alpha(sz,0.5)
-        end
-        
-    end
-    
     
     
     
@@ -649,6 +561,7 @@ for k=1:size(x,1) % main loop
 %     text(minxx+40, minzz+0.97*(maxzz-minzz), 'High Sub-Band 2 Flux', 'FontSize', 16, 'FontWeight', 'bold');
 %     text(minxx+70, minzz+0.97*(maxzz-minzz)-75, {'high speed of head'}, 'FontSize', 12, 'FontWeight', 'bold');
     
+    light('Position',lightPos)
     
     drawnow
     hold off
@@ -720,7 +633,7 @@ end
 
 function rectCoordinates = line2rect(p1,p2,w)
     
-    %can be optimised
+    %(can be optimised)
     [xx,yy]=pol2cart(0.5*pi-mod(cart2pol(p2(1)-p1(1),p2(2)-p1(2)),pi),w); 
     rectCoordinates = [p1+[xx yy];p1-[xx yy];p2-[xx yy];p2+[xx yy]];
     
