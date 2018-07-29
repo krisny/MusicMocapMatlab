@@ -478,22 +478,20 @@ for k=1:size(x,1) % main loop
                 SPby = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
                 SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
                 SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-        
-                qqq = line2rect([SPax(1),SPax(3)],[SPbx(1),SPbx(3)],p.cwidth(m)*0.003*om);
-                sx = patch(qqq(:,1),[SPax(2)+pm(p.cwidth(m)*0.005*om*0.5),SPbx(2)-pm(p.cwidth(m)*0.005*om*0.5)],qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
-                qqq = line2rect([SPay(2),SPay(3)],[SPby(2),SPby(3)],p.cwidth(m)*0.003*om);
-                sy = patch([SPay(1)+pm(p.cwidth(m)*0.005*om*0.5),SPby(1)-pm(p.cwidth(m)*0.005*om*0.5)],qqq(:,1),qqq([2 1 4 3],2)   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
-                qqq = line2rect([SPaz(1),SPaz(2)],[SPbz(1),SPbz(2)],p.cwidth(m)*0.003*om);
-                sz = patch(qqq(:,1),qqq([2 1 4 3],2),[SPaz(3)+pm(p.cwidth(m)*0.005*om*0.5),SPbz(3)-pm(p.cwidth(m)*0.005*om*0.5)]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                
+                %works now... needs cleaning:
+                qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.003*om);
+                patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.005*om*0.5);
+                sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.003*om);
+                patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.005*om*0.5);
+                sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.003*om);
+                patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.005*om*0.5);
+                sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
 
             end
-            
-            
-            
-            
 
-            
-       
     end
     grid on
     % plot midpoint-to-midpoint connections
@@ -632,11 +630,30 @@ end
 
 
 function rectCoordinates = line2rect(p1,p2,w)
+ w=w*7;   
+
+
+th = atan2(p2(1)-p1(1),p2(2)-p1(2));
+
+
+x2 = .5*w*cos(0.5*pi-th);
+y2 = .5*w*sin(0.5*pi+th);
+
     
-    %(can be optimised)
-    [xx,yy]=pol2cart(0.5*pi-mod(cart2pol(p2(1)-p1(1),p2(2)-p1(2)),pi),w); 
-    rectCoordinates = [p1+[xx yy];p1-[xx yy];p2-[xx yy];p2+[xx yy]];
-    
+
+    r1(1) = p1(1)-y2;%
+    r2(1) = p1(2)+x2;%
+    r1(2) = p1(1)+y2;
+    r2(2) = p1(2)-x2;
+    r1(4) = p2(1)-y2;
+    r2(4) = p2(2)+x2;
+    r1(3) = p2(1)+y2;
+    r2(3) = p2(2)-x2;
+   
+ 
+
+rectCoordinates = [r1' r2'];
+ 
 end
 
 
