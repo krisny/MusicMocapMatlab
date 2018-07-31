@@ -37,6 +37,16 @@ function mcplot3Dframe(d, n, p, proj)
 % University of Jyvaskyla, Finland
 
 
+%TODO:
+% Adjustable parameters for:
+% - shadowAlpha
+% - axes on/off
+% - axes limits
+% - light direction
+% - camera position
+% - shadow width
+% - 
+
 shadowAlpha = 0.25;
 
 par=[];
@@ -359,12 +369,10 @@ end
     minz = minz-abs(minz*0.05);
     
     maxxyz = max([maxx,maxy,maxz]);
-    om = round(max([maxx,maxy,maxz]-[minx,miny,minz])); %order of magnitude.. used for bone widths, marker sizes and shados widths
+    om = abs(round(max([maxx,maxy,maxz]-[minx,miny,minz]))); %order of magnitude.. used for bone widths, marker sizes and shadow widths
 
-
-%campos = ones(1,3).*[maxx,maxy,maxz]*1.5
-campos = [maxx,maxy,maxz].*[14 20 4]; %camera position
-lightPos = [maxx,maxy,maxz].*[2 26 5];
+campos = [maxx,maxy,maxz].*[5 12 1.5]; %camera position
+lightPos = [maxx,maxy,maxz].*[2 10 5]; %light position
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
@@ -467,7 +475,7 @@ for k=1:size(x,1) % main loop
 
                 r1 = [x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))];
                 r2 = [x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))];
-                [pcx,pcy,pcz] = cylinder2P(p.cwidth*0.003*om,15,r1,r2);
+                [pcx,pcy,pcz] = cylinder2P(p.cwidth*0.003*om,50,r1,r2);
                 tmpbone = surf(pcx,pcy,pcz);
                 tmpbone.EdgeColor = 'none';
                 tmpbone.FaceColor = p.colors(3);
@@ -479,15 +487,15 @@ for k=1:size(x,1) % main loop
                 SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
                 SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
                 
-                %works now... needs cleaning:
-                qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.003*om);
-                patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.005*om*0.5);
+                %works now... needs cleaning.
+                qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.005*om);
+                patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
                 sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
-                qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.003*om);
-                patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.005*om*0.5);
+                qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.005*om);
+                patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
                 sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
-                qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.003*om);
-                patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.005*om*0.5);
+                qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.005*om);
+                patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
                 sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
 
             end
@@ -529,7 +537,7 @@ for k=1:size(x,1) % main loop
     % plot markers
 
        
-        [px,py,pz] = sphere(15);                % generate coordinates for a 50 x 50 sphere
+        [px,py,pz] = sphere(50);                % generate coordinates for a 50 x 50 sphere
 
         px=px*p.msize*0.0015*om;
         py=py*p.msize*0.0015*om;
@@ -585,9 +593,6 @@ if p.animate
 end
 
 
-
-
-
 return;
 
 end
@@ -622,38 +627,24 @@ function SP = shadowPoint(planeNormalVec,pointOnPlane,p1,p2)
 
 end
 
-function plusAndMinus = pm(x)
-
-    plusAndMinus = [-x, x];
-
-end
-
-
 function rectCoordinates = line2rect(p1,p2,w)
- w=w*7;   
 
+    th = atan2(p2(1)-p1(1),p2(2)-p1(2));
 
-th = atan2(p2(1)-p1(1),p2(2)-p1(2));
+    x2 = .5*w*cos(0.5*pi-th);
+    y2 = .5*w*sin(0.5*pi+th);
 
-
-x2 = .5*w*cos(0.5*pi-th);
-y2 = .5*w*sin(0.5*pi+th);
-
-    
-
-    r1(1) = p1(1)-y2;%
-    r2(1) = p1(2)+x2;%
+    r1(1) = p1(1)-y2;
+    r2(1) = p1(2)+x2;
     r1(2) = p1(1)+y2;
     r2(2) = p1(2)-x2;
     r1(4) = p2(1)-y2;
     r2(4) = p2(2)+x2;
     r1(3) = p2(1)+y2;
     r2(3) = p2(2)-x2;
-   
- 
 
-rectCoordinates = [r1' r2'];
- 
+    rectCoordinates = [r1' r2'];
+
 end
 
 
