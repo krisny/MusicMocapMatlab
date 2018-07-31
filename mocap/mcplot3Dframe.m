@@ -45,7 +45,7 @@ function mcplot3Dframe(d, n, p, proj)
 % - light direction
 % - camera position
 % - shadow width
-% - 
+% Remove need for cylinder2P.m
 
 shadowAlpha = 0.25;
 
@@ -463,11 +463,6 @@ for k=1:size(x,1) % main loop
   
     
 
-        
-  %image([0,0,0],[1000 10 1000],img)
-%end
-%view(3)
-    
          
     % plot marker-to-marker connections
     if ~isempty(p.conn)
@@ -475,8 +470,8 @@ for k=1:size(x,1) % main loop
 
                 r1 = [x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))];
                 r2 = [x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))];
-                [pcx,pcy,pcz] = cylinder2P(p.cwidth*0.003*om,50,r1,r2);
-                tmpbone = surf(pcx,pcy,pcz);
+                [ccx,ccy,ccz] = line2cylinder(r1,r2,p.cwidth(m)*0.003*om,50);
+                tmpbone = surf(ccx,ccy,ccz);
                 tmpbone.EdgeColor = 'none';
                 tmpbone.FaceColor = p.colors(3);
                 
@@ -647,4 +642,18 @@ function rectCoordinates = line2rect(p1,p2,w)
 
 end
 
+
+function [ccx, ccy, ccz] = line2cylinder(p1,p2,r,n)
+
+theta=linspace(0,2*pi,n);
+
+normalVector=null(p1-p2);
+points1=repmat(p1',1,size(theta,2))+r*(normalVector(:,1)*cos(theta)+normalVector(:,2)*sin(theta));
+points2=repmat(p2',1,size(theta,2))+r*(normalVector(:,1)*cos(theta)+normalVector(:,2)*sin(theta));
+
+ccx = [points1(1,:); points2(1,:)];
+ccy = [points1(2,:); points2(2,:)];
+ccz = [points1(3,:); points2(3,:)];
+
+end
 
