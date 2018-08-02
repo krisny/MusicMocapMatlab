@@ -38,14 +38,18 @@ function mcplot3Dframe(d, n, p, proj)
 
 
 %TODO:
-% Adjustable parameters for:
+% par.3D with adjustable parameters for:
 % - shadowAlpha
 % - axes on/off
 % - axes limits
 % - light direction
 % - camera position
 % - shadow width
-% Remove need for cylinder2P.m
+% - floor/wall images
+% - draw floor/wall
+% Separate x and y wall images
+% get campos from azimuth and elevation
+
 
 shadowAlpha = 0.25;
 
@@ -117,9 +121,6 @@ if p.animate && p.getparams==0 %BBADd0150303
         open(movObj); %open the object
     end
 end
-
-
-
 
 par=p;
 
@@ -313,6 +314,7 @@ else
 end
  
 
+
 % az and el doesn't work that well in the 3d animation. using
 % 'CameraPosition' attribute of axes object instead
 %az=p.az;
@@ -330,27 +332,7 @@ else % perspective projection
     disp('perspective option disabled in 3D version, using orthographic')
     x=d.data(n,1:3:end);
     y=d.data(n,2:3:end);
-    z=d.data(n,3:3:end);
-%     if ~isfield(p,'pers') % for backward compatibility, use default values
-%         p.pers.c=[0 -4000 0];
-%         p.pers.th=[0 0 0];
-%         p.pers.e=[0 -2000 0];
-%     end
-% 
-%     th=180*p.pers.th/pi;
-%     rot1=[1 0 0; 0 cos(th(1)) -sin(th(1)); 0 sin(th(1)) cos(th(1))];
-%     rot2=[cos(th(2)) 0 sin(th(2)); 0 1 0; -sin(th(2)) 0 cos(th(2))];
-%     rot3=[cos(th(3)) -sin(th(3)) 0; sin(th(3)) cos(th(3)) 0; 0 0 1];
-%     dd=zeros(size(d.data(n,:)));
-%     %p.pers.e(2)=min(min(d.data(n,2:3:end)));
-%     for k=1:d.nMarkers
-%         dd(:,3*k+(-2:0))=(rot1*rot2*rot3*(d.data(n,3*k+(-2:0))'-repmat(p.pers.c',1,length(n))))';
-%     end
-%     % make closest marker to be on the projection plan
-%     dd(:,2:3:end)=dd(:,2:3:end)-min(min(dd(:,2:3:end)))+p.pers.e(2)-p.pers.c(2); 
-%     x=-(dd(:,1:3:end)-repmat(p.pers.e(1),length(n),d.nMarkers)).*(p.pers.e(2)./dd(:,2:3:end));
-%     y=(p.pers.e(2)-p.pers.c(2))./dd(:,2:3:end); % used for marker size scaling
-%     z=-(dd(:,3:3:end)-repmat(p.pers.e(3),length(n),d.nMarkers)).*(p.pers.e(2)./dd(:,2:3:end));    
+    z=d.data(n,3:3:end);   
 end
 
 
@@ -369,10 +351,73 @@ end
     minz = minz-abs(minz*0.05);
     
     maxxyz = max([maxx,maxy,maxz]);
+    
+    %axes limits
+    if isfield(p,'par3D') && isfield(p.par3D,'Limits') && ~isempty(p.par3D.Limits)
+        axesLimits = p.par3D.Limits;
+    else
+        axesLimits = [minx maxxyz;miny maxxyz;minz maxxyz];
+    end
+    
     om = abs(round(max([maxx,maxy,maxz]-[minx,miny,minz]))); %order of magnitude.. used for bone widths, marker sizes and shadow widths
 
-campos = [maxx,maxy,maxz].*[5 12 1.5]; %camera position
-lightPos = [maxx,maxy,maxz].*[2 10 5]; %light position
+    if isfield(p,'par3D') && isfield(p.par3D,'drawfloor') && p.par3D.drawfloor == 1
+        drawFloor = 1;
+    else
+        drawFloor = 0;
+    end
+    
+    if isfield(p,'par3D') && isfield(p.par3D,'drawwallx') && p.par3D.drawwallx == 1
+        drawWallX = 1;
+    else
+        drawWallX = 0;
+    end
+    
+    if isfield(p,'par3D') && isfield(p.par3D,'drawwally') && p.par3D.drawwally == 1
+        drawWallY = 1;
+    else
+        drawWallY = 0;
+    end
+    
+    if drawWallX || drawWallY
+        wallshadow = 1;
+    else
+        wallshadow = 0;
+    end
+
+    
+    %camera position
+    if isfield(p,'par3D') && isfield(p.par3D,'CameraPosition') && ~isempty(p.par3D.CameraPosition)
+        camPosition = p.par3D.CameraPosition;
+    elseif isfield(p,'az') && isfield(p,'el') && ~isempty(p.az) && ~isempty(p.el)
+        [camPosition(1), camPosition(2), camPosition(3)]  = sph2cart(deg2rad(p.az),deg2rad(p.el),maxxyz*5);
+    else
+        camPosition = [maxx,maxy,maxz]; 
+    end
+    
+    %light position
+    if isfield(p,'par3D') && isfield(p.par3D,'LightPosition') && ~isempty(p.par3D.LightPosition)
+        lightPos = p.par3D.LightPosition;
+    else
+        lightPos = [maxx,maxy,maxz].*[2 2 4];
+    end
+    
+    %camera target
+    if isfield(p,'par3D') && isfield(p.par3D,'CameraTarget') && ~isempty(p.par3D.CameraTarget)
+        camTarget = p.par3D.CameraTarget;
+    else
+        camTarget = [midx midy midz];
+    end
+    
+    
+    %camera target
+    if isfield(p,'par3D') && isfield(p.par3D,'Zoom') && ~isempty(p.par3D.Zoom)
+        zoomAmount = p.par3D.Zoom;
+    else
+        zoomAmount = 15;
+    end
+
+    
 
 % %BBADd0150303: exit function here without doing the animation or plotting, 
 % but setting the parameters, esp. the limits, to make videos with a reduced 
@@ -392,32 +437,30 @@ if p.animate %20150720 / HJ: in animate case, set figure and axes outside main l
     clf;
     set(gcf, 'WindowStyle','normal');
     %set(gcf,'Position',[50 50 p.scrsize(1) p.scrsize(2)]) ; % DVD: w=720 h=420
-    %set(gcf, 'color', bgcol);
+    %set(gcf, 'color', [.8 .8 .8]);
+    set(gcf, 'color', bgcol);
     %view(0,90);
     colormap([ones(64,1) zeros(64,1) zeros(64,1)]);
 end
 
-if isfield(p,'floorimage')
-    if ~isempty(p.floorimage)
-        floorimg = imread(p.floorimage);
-        floorlevel = minz;
+if isfield(p,'par3D') && isfield(p.par3D,'floorimage') && ~isempty(p.par3D.floorimage)
+        floorimg = imread(p.par3D.floorimage);
+        floorlevel = axesLimits(3,1);
         floorimgsize = size(floorimg); floorimgsize(end)=[];
-        floorscale = max([maxx-minx,maxy-miny,maxz-minz])/min(floorimgsize);
-    end
+        floorscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(floorimgsize);
 end
-if isfield(p,'wallimage')
-   if ~isempty(p.wallimage)
-        wallimg = imread(p.wallimage);
+
+if isfield(p,'par3D') && isfield(p.par3D,'wallimage') && ~isempty(p.par3D.wallimage)
+        wallimg = imread(p.par3D.wallimage);
         wallimgsize = size(wallimg); wallimgsize(end)=[];
-        wallscale = max([maxx-minx,maxy-miny,maxz-minz])/min(wallimgsize);
+        wallscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgsize);
         wallimg = flip(wallimg ,1);
-   end
 end
 
 for k=1:size(x,1) % main loop
     if  p.animate
         clf; 
-        axes('position', [0 0 1 1], 'XLim', [minx maxxyz], 'YLim', [miny maxxyz],'ZLim', [minz maxxyz], 'CameraPosition',campos,'CameraTarget',[midx midy midz],'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
+        axes('position', [0 0 1 1], 'XLim', axesLimits(1,1:2), 'YLim', axesLimits(2,1:2),'ZLim', axesLimits(3,1:2), 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
         %view([0 90])
         daspect([1 1 1])
         hold on;
@@ -426,11 +469,11 @@ for k=1:size(x,1) % main loop
         clf;
         set(gcf, 'WindowStyle','normal');
         %set(gcf,'Position',[50 50 p.scrsize(1) p.scrsize(2)]) ; % DVD: w=720 h=420        
-        axes('position', [0 0 1 1], 'XLim', [minx maxxyz], 'YLim', [miny maxxyz],'ZLim', [minz maxxyz], 'CameraPosition',campos,'CameraTarget',[midx midy midz],'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
+        axes('position', [0 0 1 1], 'XLim', [minx maxxyz], 'YLim', [miny maxxyz],'ZLim', [minz maxxyz], 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
         daspect([1 1 1])
         hold on
         %set(gcf, 'color', bgcol);
-        view(10,150);
+        %view(10,150);
         %colormap([ones(64,1) zeros(64,1) zeros(64,1)]);
         fignr=fignr+1;
     end
@@ -441,28 +484,23 @@ for k=1:size(x,1) % main loop
 
 %plot floor
 
- if isfield(p,'drawfloor')
-     if p.drawfloor == 1
-        floortransform = hgtransform('Matrix',makehgtform('xrotate',0,'scale',floorscale*1,'translate',[minx miny floorlevel]/floorscale*1));
+    if drawFloor
+        floortransform = hgtransform('Matrix',makehgtform('xrotate',0,'scale',floorscale,'translate',axesLimits(:,1)/floorscale));
         image(floortransform,floorimg)
-     end
- end
+    end
     %plot walls
- if isfield(p,'drawwallx')
-     if p.drawwallx == 1
-        xbackwalltransform = hgtransform('Matrix',makehgtform('scale',wallscale,'translate',[minx miny minz]/wallscale,'xrotate',pi/2));
+ 
+    if drawWallX
+        xbackwalltransform = hgtransform('Matrix',makehgtform('scale',wallscale,'translate',axesLimits(:,1)/wallscale,'xrotate',pi/2));
         image(xbackwalltransform,wallimg)
-     end
- end
-  if isfield(p,'drawwally')
-     if p.drawwally == 1
-        ybackwalltransform = hgtransform('Matrix',makehgtform('scale',wallscale,'translate',[minx miny minz]/wallscale,'xrotate',pi/2,'yrotate',pi/2));
+    end
+ 
+ 
+    if drawWallY 
+        ybackwalltransform = hgtransform('Matrix',makehgtform('scale',wallscale,'translate',axesLimits(:,1)/wallscale,'xrotate',pi/2,'yrotate',pi/2));
         image(ybackwalltransform,flip(wallimg ,2))
-     end
-  end
-  
-    
-
+    end
+ 
          
     % plot marker-to-marker connections
     if ~isempty(p.conn)
@@ -470,47 +508,86 @@ for k=1:size(x,1) % main loop
 
                 r1 = [x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))];
                 r2 = [x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))];
-                [ccx,ccy,ccz] = line2cylinder(r1,r2,p.cwidth(m)*0.003*om,50);
-                tmpbone = surf(ccx,ccy,ccz);
-                tmpbone.EdgeColor = 'none';
-                tmpbone.FaceColor = p.colors(3);
-                
-				SPax = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-                SPbx = shadowPoint([0 1 0],[0 miny 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                SPay = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-                SPby = shadowPoint([1 0 0],[minx 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-                SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                
-                %works now... needs cleaning.
-                qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.005*om);
-                patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
-                sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
-                qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.005*om);
-                patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
-                sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
-                qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.005*om);
-                patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
-                sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                if isfinite([r1,r2])
+                    [ccx,ccy,ccz] = line2cylinder(r1,r2,p.cwidth(m)*0.003*om,50);
+                    tmpbone = surf(ccx,ccy,ccz);
+                    tmpbone.EdgeColor = 'none';
+                    tmpbone.FaceColor = p.colors(3);
+
+                    %shadow coordinates for each connection on each axis
+                    if wallshadow
+                        %X axis shadow
+                        SPax = shadowPoint([0 1 0],[0 axesLimits(2,1) 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+                        SPbx = shadowPoint([0 1 0],[0 axesLimits(2,1) 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+                        if (SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1)) 
+                            qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.005*om);
+                            patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
+                            sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                        end
+                        %Y axis shadow
+                        SPay = shadowPoint([1 0 0],[axesLimits(1,1) 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+                        SPby = shadowPoint([1 0 0],[axesLimits(1,1) 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+                        if (SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)) 
+                            qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.005*om);
+                            patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
+                            sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                        end
+                    end
+
+                    SPaz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+                    SPbz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+
+                    %Z axis shadow
+                    qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.005*om);
+                    patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
+                    sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                end
 
             end
-
     end
     grid on
     % plot midpoint-to-midpoint connections
     if ~isempty(p.conn2)
-        disp('conn2 not implemented yet')
        
-%         for m=1:size(p.conn2,1)
-%             %if x(k,p.conn2(m,1))*x(k,p.conn2(m,2))*x(k,p.conn2(m,3))*x(k,p.conn2(m,4))~=0
-%             if isfinite(x(k,p.conn2(m,1))*x(k,p.conn2(m,2))*x(k,p.conn2(m,3))*x(k,p.conn2(m,4)))
-%                 tmpx1 = (x(k,p.conn2(m,1))+x(k,p.conn2(m,2)))/2;
-%                 tmpx2 = (x(k,p.conn2(m,3))+x(k,p.conn2(m,4)))/2;
-%                 tmpy1 = (z(k,p.conn2(m,1))+z(k,p.conn2(m,2)))/2;
-%                 tmpy2 = (z(k,p.conn2(m,3))+z(k,p.conn2(m,4)))/2;
-%                 plot([tmpx1 tmpx2], [tmpy1 tmpy2], '-','Color',ccol(m,:),'LineWidth', p.cwidth(m));
-%             end
-%         end
+         for m=1:size(p.conn2,1)
+             if isfinite(x(k,p.conn2(m,1))*x(k,p.conn2(m,2))*x(k,p.conn2(m,3))*x(k,p.conn2(m,4)))
+                tmpx1 = (x(k,p.conn2(m,1))+x(k,p.conn2(m,2)))/2;
+                tmpx2 = (x(k,p.conn2(m,3))+x(k,p.conn2(m,4)))/2;
+                tmpy1 = (y(k,p.conn2(m,1))+y(k,p.conn2(m,2)))/2;
+                tmpy2 = (y(k,p.conn2(m,3))+y(k,p.conn2(m,4)))/2;
+                tmpz1 = (z(k,p.conn2(m,1))+z(k,p.conn2(m,2)))/2;
+                tmpz2 = (z(k,p.conn2(m,3))+z(k,p.conn2(m,4)))/2;
+                 
+                r1 = [tmpx1 tmpy1 tmpz1];
+                r2 = [tmpx2 tmpy2 tmpz2];
+                [ccx,ccy,ccz] = line2cylinder(r1,r2,p.cwidth(m)*0.003*om,50);
+                tmpbone = surf(ccx,ccy,ccz);
+                tmpbone.EdgeColor = 'none';
+                tmpbone.FaceColor = ccol(m,:);
+                
+                %shadow coordinates for each connection on each axis
+				SPax = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx1 tmpy1 tmpz1]);
+                SPbx = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx2 tmpy2 tmpz2]);
+                SPay = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx1 tmpy1 tmpz1]);
+                SPby = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx2 tmpy2 tmpz2]);
+                SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx1 tmpy1 tmpz1]);
+                SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx2 tmpy2 tmpz2]);
+                
+                %X axis shadow
+                qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.005*om);
+                patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
+                sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                %Y axis shadow
+                qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.005*om);
+                patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
+                sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                %Z axis shadow
+                qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.005*om);
+                patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
+                sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+
+             end
+         end
 
     end
     
@@ -530,25 +607,26 @@ for k=1:size(x,1) % main loop
     
     
     % plot markers
-
        
-        [px,py,pz] = sphere(50);                % generate coordinates for a 50 x 50 sphere
+    [px,py,pz] = sphere(50); % generate coordinates for a 50 x 50 sphere
 
-        px=px*p.msize*0.0015*om;
-        py=py*p.msize*0.0015*om;
-        pz=pz*p.msize*0.0015*om;
-        
-        for m=1:size(x,2)
+    px=px*p.msize*0.0015*om;
+    py=py*p.msize*0.0015*om;
+    pz=pz*p.msize*0.0015*om;
 
-            markerBall = surface(px+x(k,m), py+y(k,m),flip(pz)+z(k,m));   
-            markerBall.FaceColor = p.colors(2); 
-            markerBall.EdgeColor = 'none';              % remove surface edge color
-            
-        end
+    for m=1:size(x,2)
+
+        markerBall = surface(px+x(k,m), py+y(k,m),flip(pz)+z(k,m));   
+        markerBall.FaceColor = p.colors(2); 
+        markerBall.EdgeColor = 'none';              % remove surface edge color
+
+    end
     
-    
-    
-    %axis off
+    if isfield(p,'par3D') && isfield(p.par3D,'ShowAxis') && p.par3D.ShowAxis == 1
+        axis on
+    else
+        axis off
+    end
     
     if p.showfnum
         h=text(minx+0.95*(maxx-minx), miny+0.05*(maxy-miny), minz+0.05*(maxz-minz), num2str(k),...
@@ -563,6 +641,19 @@ for k=1:size(x,1) % main loop
 %     text(minxx+70, minzz+0.97*(maxzz-minzz)-75, {'high speed of head'}, 'FontSize', 12, 'FontWeight', 'bold');
     
     light('Position',lightPos)
+    set(gca,'CameraViewAngle',zoomAmount)
+    
+    spotlight=0;
+    
+    if spotlight
+       [px,py,pz] = sphere(150);
+        i=50;px2=px*i;py2=py*i;pz2=pz*i;
+        earth = surface(px2, py2, pz2-i-0.0225,'edgecolor','none','FaceColor','w');
+        xlim(p.par3D.Limits(1,:)*1);
+        ylim(p.par3D.Limits(2,:)*1);
+        zlim(p.par3D.Limits(3,:)*2);
+    end
+    
     
     drawnow
     hold off
@@ -594,25 +685,26 @@ end
 
 
 function colorar=lookup_l(colorstr)
-if strcmp(colorstr, 'k')
-    colorar=[0 0 0];
-elseif strcmp(colorstr, 'w')
-    colorar=[1 1 1];
-elseif strcmp(colorstr, 'r')
-    colorar=[1 0 0];
-elseif strcmp(colorstr, 'g')
-    colorar=[0 1 0];
-elseif strcmp(colorstr, 'b')
-    colorar=[0 0 1];
-elseif strcmp(colorstr, 'y')
-    colorar=[1 1 0];
-elseif strcmp(colorstr, 'm')
-    colorar=[1 0 1];
-elseif strcmp(colorstr, 'c')
-    colorar=[0 1 1];
-end
 
-return;
+    if strcmp(colorstr, 'k')
+        colorar=[0 0 0];
+    elseif strcmp(colorstr, 'w')
+        colorar=[1 1 1];
+    elseif strcmp(colorstr, 'r')
+        colorar=[1 0 0];
+    elseif strcmp(colorstr, 'g')
+        colorar=[0 1 0];
+    elseif strcmp(colorstr, 'b')
+        colorar=[0 0 1];
+    elseif strcmp(colorstr, 'y')
+        colorar=[1 1 0];
+    elseif strcmp(colorstr, 'm')
+        colorar=[1 0 1];
+    elseif strcmp(colorstr, 'c')
+        colorar=[0 1 1];
+    end
+
+    return;
 
 end
 
@@ -645,15 +737,16 @@ end
 
 function [ccx, ccy, ccz] = line2cylinder(p1,p2,r,n)
 
-theta=linspace(0,2*pi,n);
+    circleSubdivisions=linspace(0,2*pi,n);
 
-normalVector=null(p1-p2);
-points1=repmat(p1',1,size(theta,2))+r*(normalVector(:,1)*cos(theta)+normalVector(:,2)*sin(theta));
-points2=repmat(p2',1,size(theta,2))+r*(normalVector(:,1)*cos(theta)+normalVector(:,2)*sin(theta));
+    circlePlane=null(p1-p2);
 
-ccx = [points1(1,:); points2(1,:)];
-ccy = [points1(2,:); points2(2,:)];
-ccz = [points1(3,:); points2(3,:)];
+    points1=p1'+r*(circlePlane(:,1)*cos(circleSubdivisions)+circlePlane(:,2)*sin(circleSubdivisions));
+    points2=p2'+r*(circlePlane(:,1)*cos(circleSubdivisions)+circlePlane(:,2)*sin(circleSubdivisions));
+
+    ccx = [points1(1,:); points2(1,:)];
+    ccy = [points1(2,:); points2(2,:)];
+    ccz = [points1(3,:); points2(3,:)];
 
 end
 
