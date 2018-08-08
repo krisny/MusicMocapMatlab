@@ -38,20 +38,22 @@ function mcplot3Dframe(d, n, p, proj)
 
 
 %TODO:
-% par.3D with adjustable parameters for:
-% - shadowAlpha
-% - axes on/off
-% - axes limits
-% - light direction
-% - camera position
-% - shadow width
-% - floor/wall images
-% - draw floor/wall
-% Separate x and y wall images
-% get campos from azimuth and elevation
+% make mcinitanimpar with 3D opions and default settings for:
+% - par3D.shadowAlpha
+% - par3D.showaxis 
+% - par3D.limits
+% - par3D.lightposition
+% - par3D.cameraposition
+% - par3D.shadowwidth
+% - par3D.flooriage
+% - par3D.wallimagex
+% - par3D.wallimagey
+% - par3D.drawwallx
+% - par3D.drawwally
+%
 
 
-shadowAlpha = 0.25;
+
 
 par=[];
 
@@ -343,23 +345,23 @@ end
     midy = (maxy+miny)/2;
     midz = (maxz+minz)/2;
     
-    maxx = maxx+abs(maxx*0.05);
-    maxy = maxy+abs(maxy*0.05);
-    maxz = maxz+abs(maxz*0.05);
-    minx = minx-abs(minx*0.05);
-    miny = miny-abs(miny*0.05);
-    minz = minz-abs(minz*0.05);
+%     maxx = maxx+abs(maxx*0.05);
+%     maxy = maxy+abs(maxy*0.05);
+%     maxz = maxz+abs(maxz*0.05);
+%     minx = minx-abs(minx*0.05);
+%     miny = miny-abs(miny*0.05);
+%     minz = minz-abs(minz*0.05);
     
     maxxyz = max([maxx,maxy,maxz]);
     
     %axes limits
-    if isfield(p,'par3D') && isfield(p.par3D,'Limits') && ~isempty(p.par3D.Limits)
-        axesLimits = p.par3D.Limits;
+    if isfield(p,'par3D') && isfield(p.par3D,'limits') && ~isempty(p.par3D.limits)
+        axesLimits = p.par3D.limits;
     else
         axesLimits = [minx maxxyz;miny maxxyz;minz maxxyz];
     end
     
-    om = abs(round(max([maxx,maxy,maxz]-[minx,miny,minz]))); %order of magnitude.. used for bone widths, marker sizes and shadow widths
+    om = abs(round(max(axesLimits(:,2)-axesLimits(:,1)))); %order of magnitude.. used for bone widths, marker sizes and shadow widths
 
     if isfield(p,'par3D') && isfield(p.par3D,'drawfloor') && p.par3D.drawfloor == 1
         drawFloor = 1;
@@ -368,27 +370,46 @@ end
     end
     
     if isfield(p,'par3D') && isfield(p.par3D,'drawwallx') && p.par3D.drawwallx == 1
-        drawWallX = 1;
+        drawXWall = 1;
     else
-        drawWallX = 0;
+        drawXWall = 0;
     end
     
     if isfield(p,'par3D') && isfield(p.par3D,'drawwally') && p.par3D.drawwally == 1
-        drawWallY = 1;
+        drawYWall = 1;
     else
-        drawWallY = 0;
+        drawYWall = 0;
     end
     
-    if drawWallX || drawWallY
+    if isfield(p,'par3D') && isfield(p.par3D,'showaxis') && p.par3D.showaxis == 1
+        showaxis = 1;
+    else
+        showaxis = 0;
+    end
+    
+    if drawXWall || drawYWall || showaxis
         wallshadow = 1;
     else
         wallshadow = 0;
     end
 
+    if isfield(p,'par3D') && isfield(p.par3D,'shadowalpha') && isfinite(p.par3D.shadowalpha)
+        shadowAlpha = 0.25;
+    else
+        shadowAlpha = 0.25;
+    end
+
+    if isfield(p,'par3D') && isfield(p.par3D,'shadowwidth') && isfinite(p.par3D.shadowwidth)
+        shadowWidth = ones(size(p.cwidth))*p.par3D.shadowwidth;
+    else
+        shadowWidth = p.cwidth;
+    end
+    
+
     
     %camera position
-    if isfield(p,'par3D') && isfield(p.par3D,'CameraPosition') && ~isempty(p.par3D.CameraPosition)
-        camPosition = p.par3D.CameraPosition;
+    if isfield(p,'par3D') && isfield(p.par3D,'cameraposition') && ~isempty(p.par3D.cameraposition)
+        camPosition = p.par3D.cameraposition;
     elseif isfield(p,'az') && isfield(p,'el') && ~isempty(p.az) && ~isempty(p.el)
         [camPosition(1), camPosition(2), camPosition(3)]  = sph2cart(deg2rad(p.az),deg2rad(p.el),maxxyz*5);
     else
@@ -396,25 +417,25 @@ end
     end
     
     %light position
-    if isfield(p,'par3D') && isfield(p.par3D,'LightPosition') && ~isempty(p.par3D.LightPosition)
-        lightPos = p.par3D.LightPosition;
+    if isfield(p,'par3D') && isfield(p.par3D,'lightposition') && ~isempty(p.par3D.lightposition)
+        lightPos = p.par3D.lightposition;
     else
         lightPos = [maxx,maxy,maxz].*[2 2 4];
     end
     
     %camera target
-    if isfield(p,'par3D') && isfield(p.par3D,'CameraTarget') && ~isempty(p.par3D.CameraTarget)
-        camTarget = p.par3D.CameraTarget;
+    if isfield(p,'par3D') && isfield(p.par3D,'cameratarget') && ~isempty(p.par3D.cameratarget)
+        camTarget = p.par3D.cameratarget;
     else
         camTarget = [midx midy midz];
     end
     
     
     %camera target
-    if isfield(p,'par3D') && isfield(p.par3D,'Zoom') && ~isempty(p.par3D.Zoom)
-        zoomAmount = p.par3D.Zoom;
+    if isfield(p,'par3D') && isfield(p.par3D,'zoom') && ~isempty(p.par3D.zoom)
+        camDistance = p.par3D.zoom;
     else
-        zoomAmount = 15;
+        camDistance = 15;
     end
 
     
@@ -440,7 +461,7 @@ if p.animate %20150720 / HJ: in animate case, set figure and axes outside main l
     %set(gcf, 'color', [.8 .8 .8]);
     set(gcf, 'color', bgcol);
     %view(0,90);
-    colormap([ones(64,1) zeros(64,1) zeros(64,1)]);
+    %colormap([ones(64,1) zeros(64,1) zeros(64,1)]);
 end
 
 if isfield(p,'par3D') && isfield(p.par3D,'floorimage') && ~isempty(p.par3D.floorimage)
@@ -450,11 +471,18 @@ if isfield(p,'par3D') && isfield(p.par3D,'floorimage') && ~isempty(p.par3D.floor
         floorscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(floorimgsize);
 end
 
-if isfield(p,'par3D') && isfield(p.par3D,'wallimage') && ~isempty(p.par3D.wallimage)
-        wallimg = imread(p.par3D.wallimage);
-        wallimgsize = size(wallimg); wallimgsize(end)=[];
-        wallscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgsize);
-        wallimg = flip(wallimg ,1);
+if isfield(p,'par3D') && isfield(p.par3D,'wallimagex') && ~isempty(p.par3D.wallimagex)
+        wallimgx = imread(p.par3D.wallimagex);
+        wallimgxsize = size(wallimgx); wallimgxsize(end)=[];
+        wallxscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgxsize);
+        wallimgx = flip(wallimgx ,1);
+end
+
+if isfield(p,'par3D') && isfield(p.par3D,'wallimagey') && ~isempty(p.par3D.wallimagey)
+        wallimgy = imread(p.par3D.wallimagey);
+        wallimgysize = size(wallimgy); wallimgysize(end)=[];
+        wallyscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgysize);
+        wallimgy = flip(wallimgy ,1);
 end
 
 for k=1:size(x,1) % main loop
@@ -469,17 +497,17 @@ for k=1:size(x,1) % main loop
         clf;
         set(gcf, 'WindowStyle','normal');
         %set(gcf,'Position',[50 50 p.scrsize(1) p.scrsize(2)]) ; % DVD: w=720 h=420        
-        axes('position', [0 0 1 1], 'XLim', [minx maxxyz], 'YLim', [miny maxxyz],'ZLim', [minz maxxyz], 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
+        axes('position', [0 0 1 1], 'XLim', axesLimits(1,1:2), 'YLim', axesLimits(2,1:2),'ZLim', axesLimits(3,1:2), 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
         daspect([1 1 1])
         hold on
-        %set(gcf, 'color', bgcol);
+        set(gcf, 'color', bgcol);
         %view(10,150);
         %colormap([ones(64,1) zeros(64,1) zeros(64,1)]);
         fignr=fignr+1;
     end
     
     %plot some text to appear in background
-%     text(maxxx-650, minzz+350, {YOUR TEXT'}, 'FontSize', 24, 'color', [.15 .15 .15]);
+    %text(maxx, miny, midz, {'YOUR TEXT'}, 'FontSize', 24, 'color', [.85 .15 .15]);
 
 
 %plot floor
@@ -490,15 +518,15 @@ for k=1:size(x,1) % main loop
     end
     %plot walls
  
-    if drawWallX
-        xbackwalltransform = hgtransform('Matrix',makehgtform('scale',wallscale,'translate',axesLimits(:,1)/wallscale,'xrotate',pi/2));
-        image(xbackwalltransform,wallimg)
+    if drawXWall
+        xbackwalltransform = hgtransform('Matrix',makehgtform('scale',wallxscale,'translate',axesLimits(:,1)/wallxscale,'xrotate',pi/2));
+        image(xbackwalltransform,wallimgx)
     end
  
  
-    if drawWallY 
-        ybackwalltransform = hgtransform('Matrix',makehgtform('scale',wallscale,'translate',axesLimits(:,1)/wallscale,'xrotate',pi/2,'yrotate',pi/2));
-        image(ybackwalltransform,flip(wallimg ,2))
+    if drawYWall 
+        ybackwalltransform = hgtransform('Matrix',makehgtform('scale',wallyscale,'translate',axesLimits(:,1)/wallyscale,'xrotate',pi/2,'yrotate',pi/2));
+        image(ybackwalltransform,flip(wallimgy ,2))
     end
  
          
@@ -519,28 +547,30 @@ for k=1:size(x,1) % main loop
                         %X axis shadow
                         SPax = shadowPoint([0 1 0],[0 axesLimits(2,1) 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
                         SPbx = shadowPoint([0 1 0],[0 axesLimits(2,1) 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                        if (SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1)) 
-                            qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.005*om);
+                        if lightPos(2) > y(k,p.conn(m,1)) && ((SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1))) 
+                            qqq = line2rect(SPax([1,3]),SPbx([1,3]),shadowWidth(m)*0.005*om);
                             patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
                             sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
                         end
+                        
                         %Y axis shadow
                         SPay = shadowPoint([1 0 0],[axesLimits(1,1) 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
                         SPby = shadowPoint([1 0 0],[axesLimits(1,1) 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                        if (SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)) 
-                            qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.005*om);
+                        if lightPos(1) > x(k,p.conn(m,1)) && ((SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)))
+                            qqq = line2rect(SPay([2,3]),SPby([2,3]),shadowWidth(m)*0.005*om);
                             patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
                             sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
                         end
                     end
 
+                    %Z axis shadow
                     SPaz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
                     SPbz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-
-                    %Z axis shadow
-                    qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.005*om);
-                    patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
-                    sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                    if ~drawXWall || ~drawYWall || (SPaz(1) > axesLimits(1,1) && SPaz(2) > axesLimits(2,1)) || (SPbz(1) > axesLimits(1,1) && SPbz(2) > axesLimits(2,1)) 
+                        qqq = line2rect(SPaz([1,2]),SPbz([1,2]),shadowWidth(m)*0.005*om);
+                        patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
+                        sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                    end
                 end
 
             end
@@ -560,32 +590,44 @@ for k=1:size(x,1) % main loop
                  
                 r1 = [tmpx1 tmpy1 tmpz1];
                 r2 = [tmpx2 tmpy2 tmpz2];
-                [ccx,ccy,ccz] = line2cylinder(r1,r2,p.cwidth(m)*0.003*om,50);
-                tmpbone = surf(ccx,ccy,ccz);
-                tmpbone.EdgeColor = 'none';
-                tmpbone.FaceColor = ccol(m,:);
                 
-                %shadow coordinates for each connection on each axis
-				SPax = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx1 tmpy1 tmpz1]);
-                SPbx = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx2 tmpy2 tmpz2]);
-                SPay = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx1 tmpy1 tmpz1]);
-                SPby = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx2 tmpy2 tmpz2]);
-                SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx1 tmpy1 tmpz1]);
-                SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx2 tmpy2 tmpz2]);
-                
-                %X axis shadow
-                qqq = line2rect(SPax([1,3]),SPbx([1,3]),p.cwidth(m)*0.005*om);
-                patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
-                sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
-                %Y axis shadow
-                qqq = line2rect(SPay([2,3]),SPby([2,3]),p.cwidth(m)*0.005*om);
-                patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
-                sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
-                %Z axis shadow
-                qqq = line2rect(SPaz([1,2]),SPbz([1,2]),p.cwidth(m)*0.005*om);
-                patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
-                sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                if isfinite([r1,r2])
+                    [ccx,ccy,ccz] = line2cylinder(r1,r2,p.cwidth(m)*0.003*om,50);
+                    tmpbone = surf(ccx,ccy,ccz);
+                    tmpbone.EdgeColor = 'none';
+                    tmpbone.FaceColor = p.colors(3);
 
+                    %shadow coordinates for each connection on each axis
+                    if wallshadow
+                        %X axis shadow
+        				SPax = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx1 tmpy1 tmpz1]);
+                        SPbx = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx2 tmpy2 tmpz2]);
+                        if lightPos(2) > tmpy1 && ((SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1)))
+                            qqq = line2rect(SPax([1,3]),SPbx([1,3]),shadowWidth(m)*0.005*om);
+                            patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
+                            sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                        end
+                        
+                        %Y axis shadow
+                        SPay = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx1 tmpy1 tmpz1]);
+                        SPby = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx2 tmpy2 tmpz2]);
+                        if lightPos(1) > tmpx1 && ((SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)))
+                            qqq = line2rect(SPay([2,3]),SPby([2,3]),shadowWidth(m)*0.005*om);
+                            patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
+                            sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                        end
+                    end
+
+                    %Z axis shadow
+                        SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx1 tmpy1 tmpz1]);
+                        SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx2 tmpy2 tmpz2]);
+                    if ~drawXWall || ~drawYWall || (SPaz(1) > axesLimits(1,1) && SPaz(2) > axesLimits(2,1)) || (SPbz(1) > axesLimits(1,1) && SPbz(2) > axesLimits(2,1)) 
+                        qqq = line2rect(SPaz([1,2]),SPbz([1,2]),shadowWidth(m)*0.005*om);
+                        patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
+                        sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                    end
+                end
+                
              end
          end
 
@@ -622,7 +664,7 @@ for k=1:size(x,1) % main loop
 
     end
     
-    if isfield(p,'par3D') && isfield(p.par3D,'ShowAxis') && p.par3D.ShowAxis == 1
+    if showaxis
         axis on
     else
         axis off
@@ -641,7 +683,7 @@ for k=1:size(x,1) % main loop
 %     text(minxx+70, minzz+0.97*(maxzz-minzz)-75, {'high speed of head'}, 'FontSize', 12, 'FontWeight', 'bold');
     
     light('Position',lightPos)
-    set(gca,'CameraViewAngle',zoomAmount)
+    set(gca,'CameraViewAngle',camDistance)
     
     spotlight=0;
     
@@ -649,9 +691,9 @@ for k=1:size(x,1) % main loop
        [px,py,pz] = sphere(150);
         i=50;px2=px*i;py2=py*i;pz2=pz*i;
         earth = surface(px2, py2, pz2-i-0.0225,'edgecolor','none','FaceColor','w');
-        xlim(p.par3D.Limits(1,:)*1);
-        ylim(p.par3D.Limits(2,:)*1);
-        zlim(p.par3D.Limits(3,:)*2);
+        xlim(p.par3D.limits(1,:)*1);
+        ylim(p.par3D.limits(2,:)*1);
+        zlim(p.par3D.limits(3,:)*2);
     end
     
     
@@ -708,13 +750,15 @@ function colorar=lookup_l(colorstr)
 
 end
 
+
 function SP = shadowPoint(planeNormalVec,pointOnPlane,p1,p2)
 
     SP = p1+(-dot(planeNormalVec,p1 - pointOnPlane) / dot(planeNormalVec,p2-p1)).*(p2-p1);
 
 end
 
-function rectCoordinates = line2rect(p1,p2,w)
+
+function rectangleCoordinates = line2rect(p1,p2,w)
 
     th = atan2(p2(1)-p1(1),p2(2)-p1(2));
 
@@ -730,7 +774,7 @@ function rectCoordinates = line2rect(p1,p2,w)
     r1(3) = p2(1)+y2;
     r2(3) = p2(2)-x2;
 
-    rectCoordinates = [r1' r2'];
+    rectangleCoordinates = [r1' r2'];
 
 end
 
