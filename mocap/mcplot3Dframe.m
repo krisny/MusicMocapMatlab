@@ -1,58 +1,36 @@
-function mcplot3Dframe(d, n, p, proj)
-% Plots frames of motion capture data.  
-% COMPATIBILITY NOTES (v. 1.5): Please use the function without the projection input argument, 
-% but specify it in the animation structure instead.
+function par = mcplot3Dframe(d, n, p)
+% Plots frames of motion capture data in 3D.  
 %
 % syntax
-% par = mcplotframe(d, n);
-% par = mcplotframe(d, n, p);
+% par = mcplot3Dframe(d, n);
+% par = mcplot3Dframe(d, n, p);
 %
 % input parameters
 % d: MoCap data structure
 % n: vector containing the numbers of the frames to be plotted
 % p: animpar structure (optional)
-% [depricated: proj: projection used: 0 = orthographic (default), 1 = perspective
-%                    this flag is supposed to be set in the animation parameter stucture]
 %
 % output
 % par: animpar structure used for plotting the frames (if color strings were used, they will converted to RGB triplets)
 %
 % examples
-% par = mcplotframe(d, 1);
-% mcplotframe(d, 500:10:600, par);
+% par = mcplot3Dframe(d, 1);
+% mcplot3Dframe(d, 500:10:600, par);
 %
 % comments
 % If the animpar structure is not given, the function calls
-% mcinitanimpar and sets the .limits field of the animpar structure
-% automatically so that all the markers fit into all frames.
+% mcinitanimpar with '3D' argument and sets the par3D.limits field of 
+% the animpar structure automatically so that all the markers fit into 
+% all frames.
 %
 % see also
-% mcanimate, mcinitanimpar
+% mcplotframe, mcanimate, mcinitanimpar
 %
-% 
-% Based on mcplotframe in the Motion Capture Toolbox, 3D version developed
-% by Kristian Nymoen, University of Oslo
+% Based on mcplotframe in the Motion Capture Toolbox, 
+% 3D version developed by Kristian Nymoen, University of Oslo
 % 
 % ? Part of the Motion Capture Toolbox, Copyright ?2008,
 % University of Jyvaskyla, Finland
-
-
-%TODO:
-% make mcinitanimpar with 3D opions and default settings for:
-% - par3D.shadowAlpha
-% - par3D.showaxis 
-% - par3D.limits
-% - par3D.lightposition
-% - par3D.cameraposition
-% - par3D.shadowwidth
-% - par3D.flooriage
-% - par3D.wallimagex
-% - par3D.wallimagey
-% - par3D.drawwallx
-% - par3D.drawwally
-%
-
-
 
 
 par=[];
@@ -72,7 +50,9 @@ end
 
 
 if nargin<3
-    p = mcinitanimpar;
+    p = mcinitanimpar('3D');
+    p.el = 10; %these values work better in 3D than the defaults for 2D
+    p.az = 50; %these values work better in 3D than the defaults for 2D
     if nargin==1 || ~isnumeric(n) %output fix [BB20111031]
         disp([10, 'Please set frame number(s) you want to plot.', 10]);
         [y,fs] = audioread('mcsound.wav');
@@ -387,19 +367,20 @@ end
         showaxis = 0;
     end
     
-    if drawXWall || drawYWall || showaxis
+    if isfield(p,'par3D') && isfield(p.par3D,'shadowalpha') && ~isempty(p.par3D.shadowalpha)
+        shadowAlpha = p.par3D.shadowalpha;
+    else
+        shadowAlpha = 0.25;
+    end
+    
+    if shadowAlpha > 0 && (drawXWall || drawYWall || showaxis)
         wallshadow = 1;
     else
         wallshadow = 0;
     end
 
-    if isfield(p,'par3D') && isfield(p.par3D,'shadowalpha') && isfinite(p.par3D.shadowalpha)
-        shadowAlpha = 0.25;
-    else
-        shadowAlpha = 0.25;
-    end
 
-    if isfield(p,'par3D') && isfield(p.par3D,'shadowwidth') && isfinite(p.par3D.shadowwidth)
+    if isfield(p,'par3D') && isfield(p.par3D,'shadowwidth') && ~isempty(p.par3D.shadowwidth)
         shadowWidth = ones(size(p.cwidth))*p.par3D.shadowwidth;
     else
         shadowWidth = p.cwidth;
@@ -464,21 +445,21 @@ if p.animate %20150720 / HJ: in animate case, set figure and axes outside main l
     %colormap([ones(64,1) zeros(64,1) zeros(64,1)]);
 end
 
-if isfield(p,'par3D') && isfield(p.par3D,'floorimage') && ~isempty(p.par3D.floorimage)
+if drawFloor && isfield(p,'par3D') && isfield(p.par3D,'floorimage') && ~isempty(p.par3D.floorimage)
         floorimg = imread(p.par3D.floorimage);
         floorlevel = axesLimits(3,1);
         floorimgsize = size(floorimg); floorimgsize(end)=[];
         floorscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(floorimgsize);
 end
 
-if isfield(p,'par3D') && isfield(p.par3D,'wallimagex') && ~isempty(p.par3D.wallimagex)
+if drawXWall && isfield(p,'par3D') && isfield(p.par3D,'wallimagex') && ~isempty(p.par3D.wallimagex)
         wallimgx = imread(p.par3D.wallimagex);
         wallimgxsize = size(wallimgx); wallimgxsize(end)=[];
         wallxscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgxsize);
         wallimgx = flip(wallimgx ,1);
 end
 
-if isfield(p,'par3D') && isfield(p.par3D,'wallimagey') && ~isempty(p.par3D.wallimagey)
+if drawYWall && isfield(p,'par3D') && isfield(p.par3D,'wallimagey') && ~isempty(p.par3D.wallimagey)
         wallimgy = imread(p.par3D.wallimagey);
         wallimgysize = size(wallimgy); wallimgysize(end)=[];
         wallyscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgysize);
@@ -547,29 +528,31 @@ for k=1:size(x,1) % main loop
                         %X axis shadow
                         SPax = shadowPoint([0 1 0],[0 axesLimits(2,1) 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
                         SPbx = shadowPoint([0 1 0],[0 axesLimits(2,1) 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                        if lightPos(2) > y(k,p.conn(m,1)) && ((SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1))) 
+                        if lightPos(2) > y(k,p.conn(m,1)) && lightPos(2) > y(k,p.conn(m,2)) && ((SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1))) 
                             qqq = line2rect(SPax([1,3]),SPbx([1,3]),shadowWidth(m)*0.005*om);
                             patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
-                            sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                            sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none','FaceLighting','none');alpha(sx,shadowAlpha);
                         end
                         
                         %Y axis shadow
                         SPay = shadowPoint([1 0 0],[axesLimits(1,1) 0 0],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
                         SPby = shadowPoint([1 0 0],[axesLimits(1,1) 0 0],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                        if lightPos(1) > x(k,p.conn(m,1)) && ((SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)))
+                        if lightPos(1) > x(k,p.conn(m,1)) && lightPos(1) > x(k,p.conn(m,2)) && ((SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)))
                             qqq = line2rect(SPay([2,3]),SPby([2,3]),shadowWidth(m)*0.005*om);
                             patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
-                            sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                            sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none','FaceLighting','none');alpha(sy,shadowAlpha);
                         end
                     end
 
                     %Z axis shadow
-                    SPaz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
-                    SPbz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
-                    if ~drawXWall || ~drawYWall || (SPaz(1) > axesLimits(1,1) && SPaz(2) > axesLimits(2,1)) || (SPbz(1) > axesLimits(1,1) && SPbz(2) > axesLimits(2,1)) 
-                        qqq = line2rect(SPaz([1,2]),SPbz([1,2]),shadowWidth(m)*0.005*om);
-                        patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
-                        sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                    if shadowAlpha > 0
+                        SPaz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,1)) y(k,p.conn(m,1)) z(k,p.conn(m,1))]);
+                        SPbz = shadowPoint([0 0 1],[0 0 axesLimits(3,1)],lightPos,[x(k,p.conn(m,2)) y(k,p.conn(m,2)) z(k,p.conn(m,2))]);
+                        if ~drawXWall || ~drawYWall || (SPaz(1) > axesLimits(1,1) && SPaz(2) > axesLimits(2,1)) || (SPbz(1) > axesLimits(1,1) && SPbz(2) > axesLimits(2,1)) 
+                            qqq = line2rect(SPaz([1,2]),SPbz([1,2]),shadowWidth(m)*0.005*om);
+                            patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
+                            sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none','FaceLighting','none');alpha(sz,shadowAlpha);
+                        end
                     end
                 end
 
@@ -602,29 +585,31 @@ for k=1:size(x,1) % main loop
                         %X axis shadow
         				SPax = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx1 tmpy1 tmpz1]);
                         SPbx = shadowPoint([0 1 0],[0 miny 0],lightPos,[tmpx2 tmpy2 tmpz2]);
-                        if lightPos(2) > tmpy1 && ((SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1)))
+                        if lightPos(2) > tmpy1 && lightPos(1) > tmpy2 && ((SPax(1) > axesLimits(1,1) && SPax(3) > axesLimits(3,1)) || (SPbx(1) > axesLimits(1,1) && SPbx(3) > axesLimits(3,1)))
                             qqq = line2rect(SPax([1,3]),SPbx([1,3]),shadowWidth(m)*0.005*om);
                             patchdepth = ones(4,1)*SPax(2)*(p.cwidth(m)*0.001*log(om));
-                            sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sx,shadowAlpha);
+                            sx = patch([qqq(:,1);qqq(:,1)],SPax(2)-[patchdepth; -patchdepth],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none','FaceLighting','none');alpha(sx,shadowAlpha);
                         end
                         
                         %Y axis shadow
                         SPay = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx1 tmpy1 tmpz1]);
                         SPby = shadowPoint([1 0 0],[minx 0 0],lightPos,[tmpx2 tmpy2 tmpz2]);
-                        if lightPos(1) > tmpx1 && ((SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)))
+                        if lightPos(1) > tmpx1 && lightPos(1) > tmpx2 && ((SPay(2) > axesLimits(2,1) && SPay(3) > axesLimits(3,1)) || (SPby(2) > axesLimits(2,1) && SPby(3) > axesLimits(3,1)))
                             qqq = line2rect(SPay([2,3]),SPby([2,3]),shadowWidth(m)*0.005*om);
                             patchdepth = ones(4,1)*SPay(1)*(p.cwidth(m)*0.001*log(om));
-                            sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none');alpha(sy,shadowAlpha);
+                            sy = patch(SPay(1)-[patchdepth; -patchdepth],[qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)]   ,'k','EdgeColor','none','FaceLighting','none');alpha(sy,shadowAlpha);
                         end
                     end
-
-                    %Z axis shadow
-                        SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx1 tmpy1 tmpz1]);
-                        SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx2 tmpy2 tmpz2]);
-                    if ~drawXWall || ~drawYWall || (SPaz(1) > axesLimits(1,1) && SPaz(2) > axesLimits(2,1)) || (SPbz(1) > axesLimits(1,1) && SPbz(2) > axesLimits(2,1)) 
-                        qqq = line2rect(SPaz([1,2]),SPbz([1,2]),shadowWidth(m)*0.005*om);
-                        patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
-                        sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none');alpha(sz,shadowAlpha);
+                    
+                    if shadowAlpha > 0
+                            %Z axis shadow
+                            SPaz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx1 tmpy1 tmpz1]);
+                            SPbz = shadowPoint([0 0 1],[0 0 minz],lightPos,[tmpx2 tmpy2 tmpz2]);
+                        if ~drawXWall || ~drawYWall || (SPaz(1) > axesLimits(1,1) && SPaz(2) > axesLimits(2,1)) || (SPbz(1) > axesLimits(1,1) && SPbz(2) > axesLimits(2,1)) 
+                            qqq = line2rect(SPaz([1,2]),SPbz([1,2]),shadowWidth(m)*0.005*om);
+                            patchdepth = ones(4,1)*SPaz(3)*(p.cwidth(m)*0.001*log(om));
+                            sz = patch([qqq(:,1);qqq(:,1)],[qqq(:,2);qqq(:,2)],SPaz(3)-[patchdepth; -patchdepth]   ,'k','EdgeColor','none','FaceLighting','none');alpha(sz,shadowAlpha);
+                        end
                     end
                 end
                 
