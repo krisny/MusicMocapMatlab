@@ -102,7 +102,7 @@ if p.animate && p.getparams==0 %BBADd0150303
         movObj.FrameRate = p.fps; %set frame rate before opening the video object
         open(movObj); %open the object
     end
-    fprintf('Writing video frame number                     '),
+    
 end
 
 par=p;
@@ -694,7 +694,10 @@ for k=1:size(x,1) % main loop
         else
             writeVideo(movObj,getframe(gcf)); %BB_NEW_20140212 for VideoWriter
         end
-        
+
+if k == 1
+    fprintf('Writing video frame number                     ')
+end
 fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b')        
 fprintf('%8d of %8d',k,size(x,1))
 
