@@ -23,6 +23,7 @@ function dist = mcmarkerdist2(d, m1, m2)
 % ? Part of the Motion Capture Toolbox, Copyright ?2008, 
 % University of Jyvaskyla, Finland
 
+
 if isfield(d,'type') && strcmp(d.type, 'MoCap data')
     if length(m2) == 1
         %calc distance between two markers
@@ -61,5 +62,8 @@ if isfield(d,'type') && strcmp(d.type, 'MoCap data')
     end
 else
     disp('The first input argument should be a variable with MoCap data structure.');
+end
+
+
 end
 
