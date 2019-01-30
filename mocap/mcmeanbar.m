@@ -42,7 +42,7 @@ for j = 1:nbars
     
 end
 
-md.data = mean(tmp,3);
+md.data = nanmean(tmp,3);
 
 
 end
