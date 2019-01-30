@@ -36,16 +36,11 @@ function par = mcplot3Dframe(d, n, p)
 par=[];
 
 if isfield(d,'type') && strcmp(d.type, 'MoCap data') || isfield(d,'type') && strcmp(d.type, 'norm data') || isfield(d,'type') && strcmp(d.type, 'segm data')
-else disp([10, 'The first input argument has to be a variable with valid mocap toolbox data structure.', 10]);
+else
+    disp([10, 'The first input argument has to be a variable with valid mocap toolbox data structure.', 10]);
     [y,fs] = audioread('mcsound.wav');
     sound(y,fs);
     return;
-end
-
-if nargin>3 %BBADd0150303
-    disp([10, 'Please note that, from MCT version 1.5, the perspective projection flag is set in the field "perspective" in the animation'])
-    disp(['parameters. Please adapt your code accordingly.', 10])
-    p.perspective=proj;
 end
 
 
@@ -72,16 +67,10 @@ for k=1:length(n)
     end
 end
 
-%for compatibility of parameter structure
-if isfield(p, 'folder') %#BB20150303/20150717
-    p.output=p.folder;
-    p = rmfield(p,'folder');
-    disp([10, 'Please note that, from MCT version 1.5, the parameter "output" is used instead of "folder" to specify the file/folder name.'])
-    disp(['Please adapt your code accordingly.', 10])
-end
 
 if isfield(p,'type') && strcmp(p.type, 'animpar')
-else disp([10, 'The third input argument has to be an animation parameter structure.', 10]);
+else
+    disp([10, 'The third input argument has to be an animation parameter structure.', 10]);
     [y,fs] = audioread('mcsound.wav');
     sound(y,fs);
     return;
@@ -113,7 +102,8 @@ if ischar(p.colors)
     for k=1:5
         colors(k,:)=lookup_l(p.colors(k));
     end
-else colors=p.colors; %Fix BB20141202 ? if colors were already in num array
+else
+    colors=p.colors; %Fix BB20141202 ? if colors were already in num array
 end
 
 bgcol=colors(1,:); % set background color
@@ -264,7 +254,7 @@ if p.trl~=0
         p.twidth=twidth;
     end
 end
-    
+
 %individual widths for connectors and traces
 %fill up cwidth
 if length(p.cwidth)<size(p.conn,1)
@@ -436,10 +426,10 @@ end
 fignr=1;
 
 if p.animate %20150720 / HJ: in animate case, set figure and axes outside main loop
-    %figure(fignr); 
+    figure(fignr); 
     clf;
     set(gcf, 'WindowStyle','normal');
-    %set(gcf,'Position',[50 50 p.scrsize(1) p.scrsize(2)]) ; % DVD: w=720 h=420
+    set(gcf,'Position',[50 50 p.scrsize(1) p.scrsize(2)]) ; % DVD: w=720 h=420
     %set(gcf, 'color', [.8 .8 .8]);
     set(gcf, 'color', bgcol);
     %view(0,90);
@@ -448,29 +438,29 @@ end
 
 if drawFloor && isfield(p,'par3D') && isfield(p.par3D,'floorimage') && ~isempty(p.par3D.floorimage)
         floorimg = imread(p.par3D.floorimage);
-        floorlevel = axesLimits(3,1);
         floorimgsize = size(floorimg); floorimgsize(end)=[];
-        floorscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(floorimgsize);
+        floorscale = max(axesLimits(:,2)-axesLimits(:,1))/min(floorimgsize);
 end
 
 if drawXWall && isfield(p,'par3D') && isfield(p.par3D,'wallimagex') && ~isempty(p.par3D.wallimagex)
         wallimgx = imread(p.par3D.wallimagex);
         wallimgxsize = size(wallimgx); wallimgxsize(end)=[];
-        wallxscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgxsize);
+        wallxscale = max(axesLimits(:,2)-axesLimits(:,1))/min(wallimgxsize);
         wallimgx = flip(wallimgx ,1);
 end
 
 if drawYWall && isfield(p,'par3D') && isfield(p.par3D,'wallimagey') && ~isempty(p.par3D.wallimagey)
         wallimgy = imread(p.par3D.wallimagey);
         wallimgysize = size(wallimgy); wallimgysize(end)=[];
-        wallyscale = max([axesLimits(:,2)-axesLimits(:,1)])/min(wallimgysize);
+        wallyscale = max(axesLimits(:,2)-axesLimits(:,1))/min(wallimgysize);
         wallimgy = flip(wallimgy ,1);
 end
 
 for k=1:size(x,1) % main loop
     if  p.animate
         clf; 
-        axes('position', [0 0 1 1], 'XLim', axesLimits(1,1:2), 'YLim', axesLimits(2,1:2),'ZLim', axesLimits(3,1:2), 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
+        %axes('position', [0 0 1 1], 'XLim', axesLimits(1,1:2), 'YLim', axesLimits(2,1:2),'ZLim', axesLimits(3,1:2), 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
+        axes('position', [0 0 1 1], 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
         %view([0 90])
         daspect([1 1 1])
         hold on;
@@ -478,8 +468,9 @@ for k=1:size(x,1) % main loop
         figure(fignr); 
         clf;
         set(gcf, 'WindowStyle','normal');
-        %set(gcf,'Position',[50 50 p.scrsize(1) p.scrsize(2)]) ; % DVD: w=720 h=420        
-        axes('position', [0 0 1 1], 'XLim', axesLimits(1,1:2), 'YLim', axesLimits(2,1:2),'ZLim', axesLimits(3,1:2), 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
+        set(gcf,'Position',[50 50 p.scrsize(1) p.scrsize(2)]) ; % DVD: w=720 h=420        
+        %axes('position', [0 0 1 1], 'XLim', axesLimits(1,1:2), 'YLim', axesLimits(2,1:2),'ZLim', axesLimits(3,1:2), 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
+        axes('position', [0 0 1 1], 'CameraPosition',camPosition,'CameraTarget',camTarget,'Projection','perspective','CameraUpVector',[0 0 1],'Color',p.colors(1));
         daspect([1 1 1])
         hold on
         set(gcf, 'color', bgcol);
@@ -491,15 +482,11 @@ for k=1:size(x,1) % main loop
     %plot some text to appear in background
     %text(maxx, miny, midz, {'YOUR TEXT'}, 'FontSize', 24, 'color', [.85 .15 .15]);
 
-
-%plot floor
-
     if drawFloor
         floortransform = hgtransform('Matrix',makehgtform('xrotate',0,'scale',floorscale,'translate',axesLimits(:,1)/floorscale));
         image(floortransform,floorimg)
     end
-    %plot walls
- 
+    
     if drawXWall
         xbackwalltransform = hgtransform('Matrix',makehgtform('scale',wallxscale,'translate',axesLimits(:,1)/wallxscale,'xrotate',pi/2));
         image(xbackwalltransform,wallimgx)
@@ -663,7 +650,7 @@ for k=1:size(x,1) % main loop
     end
     
 %     %plot some copywrite text or anything else - BB20121102
-%      text(maxxx-650, minzz+350, {'Jyv?skyl? Music & Motion Capture'}, 'FontSize', 24, 'color', [.9 .9 .9]);
+%     text(maxxx-650, minzz+350, {'Jyv?skyl? Music & Motion Capture'}, 'FontSize', 24, 'color', [.9 .9 .9]);
 %     text(maxxx-300, 0, {'Birgitta Burger', 'Jyv?skyl? Univ.', 'Finland'});
 %     text(minxx+40, minzz+0.97*(maxzz-minzz), 'High Sub-Band 2 Flux', 'FontSize', 16, 'FontWeight', 'bold');
 %     text(minxx+70, minzz+0.97*(maxzz-minzz)-75, {'high speed of head'}, 'FontSize', 12, 'FontWeight', 'bold');
@@ -671,18 +658,9 @@ for k=1:size(x,1) % main loop
     light('Position',lightPos)
     set(gca,'CameraViewAngle',camDistance)
     
-    spotlight=0;
-    
-    if spotlight
-       [px,py,pz] = sphere(150);
-        i=50;px2=px*i;py2=py*i;pz2=pz*i;
-        earth = surface(px2, py2, pz2-i-0.0225,'edgecolor','none','FaceColor','w');
-        xlim(p.par3D.limits(1,:)*1);
-        ylim(p.par3D.limits(2,:)*1);
-        zlim(p.par3D.limits(3,:)*2);
-    end
-    
-    
+        
+    drawnow
+    hold off
     drawnow
     hold off
     if p.animate
@@ -694,13 +672,12 @@ for k=1:size(x,1) % main loop
         else
             writeVideo(movObj,getframe(gcf)); %BB_NEW_20140212 for VideoWriter
         end
-
-if k == 1
-    fprintf('Writing video frame number                     ')
-end
-fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b')        
-fprintf('%8d of %8d',k,size(x,1))
-
+        
+        if k == 1
+            fprintf('Writing video frame number                     ')
+        end
+        fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b')        
+        fprintf('%8d of %8d',k,size(x,1))
 
     end
 end
