@@ -15,6 +15,8 @@ function dout = mcxcorrsync(d,syncper)
 
 
 dout = d;
+dout.data = NaN(size(dout.data,1),size(dout.data,2));
+
 syncper = d.freq*syncper; %converting syncper to frame numbers
 
 
@@ -22,15 +24,18 @@ syncper = d.freq*syncper; %converting syncper to frame numbers
 if ~strcmp(d.type,'norm data')
     %todo: option for not calculating norm before sync
     d2 = mcnorm(d);
+    dout.data(:,1) = d.data(:,1);
 else
     d2 = d;
+    dout.data(:,1:3) = d.data(:,1:3);
 end
 
 
 
 
 %creating NaN matrix (ensures that empty frames becomes NaN after aligning)
-dout.data = NaN(size(dout.data,1),size(dout.data,2));
+
+
 
 for i = 2:d2.nMarkers
     

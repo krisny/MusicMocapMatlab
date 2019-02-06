@@ -23,6 +23,7 @@ function dist = mcmarkerdist2(d, m1, m2)
 % ? Part of the Motion Capture Toolbox, Copyright ?2008, 
 % University of Jyvaskyla, Finland
 
+dist = zeros(d.nFrames,1);
 
 if isfield(d,'type') && strcmp(d.type, 'MoCap data')
     if length(m2) == 1
@@ -42,7 +43,7 @@ if isfield(d,'type') && strcmp(d.type, 'MoCap data')
         c1 = 3*m1+(-2:0); c2 = 3*m2(1)+(-2:0); c3 = 3*m2(2)+(-2:0);
         %I'm sure there is a more elegant way of doing this, but at least it works:
         for i = 1:d.nFrames
-            dist(i) = norm(cross([d.data(i,c2);d.data(i,c3)]',[d.data(i,c2);d.data(i,c1)]'))/norm([d.data(i,c2);d.data(i,c3)]');
+            dist(i) = norm(cross(d.data(i,c1)-d.data(i,c2),d.data(i,c1)-d.data(i,c3)))/norm(d.data(i,c3)-d.data(i,c2));
         end
     elseif length(m2) == 3
         %calc distance between marker and plane
