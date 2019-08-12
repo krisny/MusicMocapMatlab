@@ -55,7 +55,7 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td)
     
     %isolate the master recording, to which the other recordigs are aligned
     if masterIndex == 0
-        xcm = mcarraymean(data);
+        xcm = mcarrayMean(data);
         if td
             xcm = mctimeder(xcm,td);
         end
