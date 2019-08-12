@@ -3,7 +3,7 @@ function data = mcarrayRead(datafolder)
 % Read all the mocap data in a folder into a struct array
 % mcarrayRead(datafolder)
 % 
-% default datafolder = ./data/
+% default datafolder = './data/'
 %
 
     if nargin == 0
