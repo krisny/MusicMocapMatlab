@@ -591,8 +591,8 @@ if isfield(d(1),'type')
             for m=1%:length(p2)
                 if strcmp(plotopt, 'sep') 
                     subplot(length(p1), 1, k)
-                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'HandleVisibility','off');
-                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'HandleVisibility','off');
+                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'k','HandleVisibility','off');
+                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'k','HandleVisibility','off');
                 else
                     pl1 = plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'HandleVisibility','off');
                     pl2 = plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'HandleVisibility','off');
