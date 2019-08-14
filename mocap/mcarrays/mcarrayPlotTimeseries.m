@@ -1,6 +1,7 @@
 function mcarrayPlotTimeseries(varargin)
 % 
-% TODO: Function to plot marker number X of each entry in the array
+% Plotting all entries in the array. 
+% Only suitable for MoCap Data or Norm Data types
 %
 %
 % By Kristian Nymoen, RITMO/University of Oslo, 2019
@@ -27,6 +28,9 @@ timetype=[];
 plotopt=[];
 label=[];
 names=[];
+plotMean=0;
+plotStd=0;
+showLines=1;
 
 for k=3:2:length(varargin)
     if strcmp(varargin{k}, 'dim')
@@ -41,7 +45,14 @@ for k=3:2:length(varargin)
         label=varargin{k+1};
     elseif strcmp(varargin{k}, 'names')
         names=varargin{k+1};
+    elseif strcmpi(varargin{k}, 'plotMean')
+        plotMean=varargin{k+1};
+    elseif strcmpi(varargin{k}, 'plotStd')
+        plotStd=varargin{k+1};
+    elseif strcmpi(varargin{k}, 'showLines')
+        showLines=varargin{k+1};
     else
+        
         str=sprintf('Input argument %s unknown.', varargin{k});
         disp([10, str, 10])
 %         [y,fs] = audioread('mcsound.wav');
@@ -50,6 +61,13 @@ for k=3:2:length(varargin)
     end
 end
 
+if plotStd
+    plotMean = 1;
+end
+
+if ~plotMean 
+    showLines = 1;
+end
 
 %set default values and check for incorrect spelling
 
@@ -167,13 +185,17 @@ p2=dim;
 
 set(0,'DefaultTextInterpreter','none') %for underscores (and such) in marker names
 
-colors={'blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black'};
+colors={[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.9290 0.6940 0.1250],[0.4940 0.1840 0.5560],[0.4660 0.6740 0.1880],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
+
+if plotMean %lighter colors when showing mean curves
+    colors = cellfun(@(x) x*.5+.5,colors,'UniformOutput',false);
+end
 
 figure
 
 if isfield(d(1),'type')
     
-    for di =1:length(d)
+    for di = 1:length(d)
     
     t = (1:d(di).nFrames)';%-1 taken away as it caused time series to start at 0... [BB 20110301]
     if strcmp(timetype,'sec') 
@@ -185,9 +207,11 @@ if isfield(d(1),'type')
         for k=1:length(p1)
             for m=1:length(p2)
                 if strcmp(plotopt, 'sep')
-                    subplot(length(p1), length(p2), length(p2)*(k-1)+m),hold all
+                    subplot(length(p1), length(p2), length(p2)*(k-1)+m),hold on
 
-                    pl=plot(t, d(di).data(:,3*p1(k)-3+p2(m)));
+                    if showLines
+                        pl=plot(t, d(di).data(:,3*p1(k)-3+p2(m)));
+                    end                   
                     
                     axis([min(t) max(t) -Inf Inf])
                     if names==0
@@ -195,19 +219,29 @@ if isfield(d(1),'type')
                     elseif names==1
                         title(['Marker ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m))])
                     end
+                    
                 else
-                    hold all
-                    pl=plot(t, d(di).data(:,3*p1(k)-3+p2(m)));
-                    axis([min(t) max(t) -Inf Inf])
-                    set(pl,'color',colors{mod(al-1,7)+1}) %al has 7 colors, should start over with blue after 7 lines
+                    hold on
+                    if showLines
+                        pl=plot(t, d(di).data(:,3*p1(k)-3+p2(m)));
+                    
+                        set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+
+                        if names==0
+                            st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m))];
+                        elseif names==1
+                            st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m))];
+                        end 
+                        al=al+1;
+                    end
+                    
                     if names==0
                         title(['Marker [' num2str(p1) '], dim. [' num2str(p2) ']'])
-                        st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m))];
                     elseif names==1
                         title(['Marker [' num2str(p1) '], dim. [' num2str(p2) ']'])
-                        st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m))];
                     end 
-                    al=al+1;
+                    axis([min(t) max(t) -Inf Inf])
+                    
                     hold on
                 end
                 if ~isscalar(label) %if label is [] or string, then plot labels
@@ -221,40 +255,51 @@ if isfield(d(1),'type')
                 end
             end
         end
-        if strcmp(plotopt, 'comb') %plot legend
+        if showLines && strcmp(plotopt, 'comb') %plot legend
             leg=legend(st, 'Location', 'EastOutside'); 
         end 
     elseif strcmp(d(di).type, 'norm data')
         
         al=1;%amount of lines - for 'comb' plotting
-        plot(t, d(di).data(:,p1));
+        %plot(t, d(di).data(:,p1));
         for k=1:length(p1)
             for m=1%:length(p2)
                 if strcmp(plotopt, 'sep') 
-                    subplot(length(p1), 1, k),,hold all
-                    plot(t, d(di).data(:,p1(k)))
+                    subplot(length(p1), 1, k),hold on
+                    if showLines
+                        plot(t, d(di).data(:,p1(k))) 
+                    end
+                    
                     axis([min(t) max(t) -Inf Inf])
                     if names==0
                         title(['Marker ' num2str(p1(k)) ', norm data'])
                     elseif names==1
                         title(['Marker ' char(d(di).markerName{p1(k)}) ', norm data'])
                     end
-                else
-                    hold all
-                    pl=plot(t, d(di).data(:,p1(k))); %FIXBB110102: 'comb' also for norm data
-                    axis([min(t) max(t) -Inf Inf])
-                    set(pl,'color',colors{mod(al-1,7)+1}) %al has 4 colors, should start over with blue after 7 lines
                     
-%                     title(['Marker [' num2str(p1) '], norm data'])
+                else
+                    hold on
+                    if showLines
+                        pl=plot(t, d(di).data(:,p1(k))); %FIXBB110102: 'comb' also for norm data
+                    
+                        axis([min(t) max(t) -Inf Inf])
+                        set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
+
+    %                     title(['Marker [' num2str(p1) '], norm data'])
+                        if names==0
+                            st{al} = ['M. ' num2str(p1(k))];
+                        elseif names==1
+                            st{al} = ['M. ' char(d(di).markerName{p1(k)})];
+                        end
+
+                        al=al+1;
+                    end
+                    
                     if names==0
                         title(['Marker [' num2str(p1) '], norm data'])
-                        st{al} = ['M. ' num2str(p1(k))];
                     elseif names==1
                         title(['Marker [' num2str(p1) '], norm data'])
-                        st{al} = ['M. ' char(d(di).markerName{p1(k)})];
                     end
-
-                    al=al+1;
                     hold on
                 end
                 if ~isscalar(label) %if label is [] or string, then plot labels
@@ -269,7 +314,7 @@ if isfield(d(1),'type')
                 end
             end
         end
-        if strcmp(plotopt, 'comb') %plot legend
+        if showLines && strcmp(plotopt, 'comb') %plot legend
             legend(st, 'Location', 'EastOutside'); 
         end 
     
@@ -283,7 +328,7 @@ if isfield(d(1),'type')
                 if strcmp(var, 'angle')
                     if strcmp(plotopt, 'sep')
                         % k
-                        subplot(length(p1),1,k),hold all
+                        subplot(length(p1),1,k),hold on
                         plot(t, tmp)
                         axis([min(t) max(t) -Inf Inf])
                         if names==0
@@ -292,10 +337,10 @@ if isfield(d(1),'type')
                             title(['Segm. ' char(d(di).segmentName{p1(k)}) ' - angle'])
                         end                
                     else
-                        hold all
+                        hold on
                         pl=plot(t, tmp); %FIXBB201202010: 'comb' also for segm data
                         axis([min(t) max(t) -Inf Inf])
-                        set(pl,'color',colors{mod(al-1,7)+1}) %al has 4 colors, should start over with blue after 7 lines
+                        set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                         if names==0
                             title(['Segm. [' num2str(p1) '] - angle'])
                             st{al} = ['Segm. ' num2str(p1(k))];
@@ -318,7 +363,7 @@ if isfield(d(1),'type')
                 elseif strcmp(var, 'eucl')
                     for m=1:length(p2)
                         if strcmp(plotopt, 'sep')
-                            subplot(length(p1), length(p2), length(p2)*(k-1)+m),hold all
+                            subplot(length(p1), length(p2), length(p2)*(k-1)+m),hold on
                             plot(t, tmp(:,p2(m)))
                             if names==0
                                 title(['Segm. ' num2str(p1(k)) ', dim. ' num2str(p2(m)) ' - eucl']);
@@ -327,10 +372,10 @@ if isfield(d(1),'type')
                             end
                             axis([min(t) max(t) -Inf Inf])
                         else
-                            hold all
+                            hold on
                             pl=plot(t, tmp(:,p2(m))); %FIXBB201202010: 'comb' also for segm data
                             axis([min(t) max(t) -Inf Inf])
-                            set(pl,'color',colors{mod(al-1,7)+1}) %al has 4 colors, should start over with blue after 7 lines
+                            set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                             if names==0
                                 title(['Segm. [' num2str(p1) '], dim. [' num2str(p2) '] - eucl'])
                                 st{al} = ['Segm. ' num2str(p1(k)) ', dim. ' num2str(p2(m)) ];
@@ -354,7 +399,7 @@ if isfield(d(1),'type')
                 elseif strcmp(var, 'quat')
                     for m=1:length(p2)
                         if strcmp(plotopt, 'sep')
-                            subplot(length(p1), length(p2), length(p2)*(k-1)+m),hold all
+                            subplot(length(p1), length(p2), length(p2)*(k-1)+m),hold on
                             plot(t, tmp(:,p2(m)))
                             if names==0
                                 title(['Segm. ' num2str(p1(k)) ', comp. ' num2str(p2(m)) ' - quat']);
@@ -363,10 +408,10 @@ if isfield(d(1),'type')
                             end
                             axis([min(t) max(t) -Inf Inf])
                         else
-                            hold all
+                            hold on
                             pl=plot(t, tmp(:,p2(m))); %FIXBB201202010: 'comb' also for segm data
                             axis([min(t) max(t) -Inf Inf])
-                            set(pl,'color',colors{mod(al-1,7)+1}) %al has 4 colors, should start over with blue after 7 lines
+                            set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                             if names==0
                                 title(['Segm. [' num2str(p1) '], comp. [' num2str(p2) '] - quat'])
                                 st{al} = ['Segm. ' num2str(p1(k)) ', comp. ' num2str(p2(m)) ];
@@ -393,10 +438,143 @@ if isfield(d(1),'type')
             end
         end
     end
-    if strcmp(plotopt, 'comb') %plot legend
+    if showLines && strcmp(plotopt, 'comb') %plot legend
         legend(st, 'Location', 'EastOutside'); 
     end
     end
+    
+    if plotMean
+            
+    t = (1:min([d.nFrames]))';%-1 taken away as it caused time series to start at 0... [BB 20110301]
+    if strcmp(timetype,'sec') 
+        t = (t-1)/d(1).freq; 
+    end
+    if strcmp(d(1).type, 'MoCap data')
+        
+        dmean = mcarrayMean(d);
+
+        for k=1:length(p1)
+            for m=1:length(p2)
+                if strcmp(plotopt, 'sep')
+                    subplot(length(p1), length(p2), length(p2)*(k-1)+m)
+
+                    pl=plot(t, dmean.data(:,3*p1(k)-3+p2(m)),'k','LineWidth',2);
+                    
+                else
+                    pl=plot(t, dmean.data(:,3*p1(k)-3+p2(m)),'k','LineWidth',2);
+
+                    if names==0
+                        st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m)), ' MEAN'];
+                    elseif names==1
+                        st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m)), ' MEAN'];
+                    end 
+                    al=al+1;
+                    hold on
+                end
+            end
+        end
+    elseif strcmp(d(1).type, 'norm data')
+        
+        dmean = mcarrayMean(d);
+        
+        al=1;%amount of lines - for 'comb' plotting
+        %plot(t, dmean.data(:,p1),'k','LineWidth',2);
+        for k=1:length(p1)
+            for m=1%:length(p2)
+                if strcmp(plotopt, 'sep') 
+                    subplot(length(p1), 1, k)
+                    plot(t, dmean.data(:,p1(k)),'k','LineWidth',2);
+                else
+                    pl=plot(t, dmean.data(:,p1(k)),'k','LineWidth',2); %FIXBB110102: 'comb' also for norm data
+                    if names==0
+                        st{al} = ['M. ' num2str(p1(k)), ' MEAN'];
+                    elseif names==1
+                        st{al} = ['M. ' char(d(di).markerName{p1(k)}), ' MEAN'];
+                    end
+
+                    al=al+1;
+                    hold on
+                end
+            end
+        end
+    
+    elseif strcmp(d(1).type, 'segm data')
+        
+        disp('plotting of array mean not implemented for segment data')
+    end
+    if strcmp(plotopt, 'comb') %plot legend
+        leg=legend(st, 'Location', 'EastOutside'); 
+    end 
+                
+    end %of if plotmean
+    
+    
+    
+    if plotStd
+            
+    if strcmp(d(1).type, 'MoCap data')
+        
+        dstd = mcarrayStd(d);
+
+        for k=1:length(p1)
+            for m=1:length(p2)
+                if strcmp(plotopt, 'sep')
+                    subplot(length(p1), length(p2), length(p2)*(k-1)+m)
+
+                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
+                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
+                    
+                else
+                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
+                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
+
+                    if names==0
+                        st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m)), ' std'];
+                    elseif names==1
+                        st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m)), ' std'];
+                    end 
+                    al=al+1;
+                    hold on
+                end
+            end
+        end
+    elseif strcmp(d(1).type, 'norm data')
+        
+        dstd = mcarrayStd(d);
+        
+        al=1;%amount of lines - for 'comb' plotting
+        %plot(t, dmean.data(:,p1),'k','LineWidth',2);
+        for k=1:length(p1)
+            for m=1%:length(p2)
+                if strcmp(plotopt, 'sep') 
+                    subplot(length(p1), 1, k)
+                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'k--','HandleVisibility','off');
+                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'k--','HandleVisibility','off');
+                    
+                else
+                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'k--','HandleVisibility','off');
+                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'k--','HandleVisibility','off');
+                    if names==0
+                        st{al} = ['M. ' num2str(p1(k)), ' std'];
+                    elseif names==1
+                        st{al} = ['M. ' char(d(di).markerName{p1(k)}), ' std'];
+                    end
+
+                    al=al+1;
+                    hold on
+                end
+            end
+        end
+    
+    elseif strcmp(d(1).type, 'segm data')
+        
+        disp('plotting of array SD not implemented for segment data')
+    end
+                
+    end %of if plotstd
+    
+    
+    
     
 else % direct reference to data
     if ~exist('p1')
