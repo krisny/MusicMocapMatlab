@@ -1,11 +1,56 @@
 function mcarrayPlotTimeseries(varargin)
 % 
 % Plotting all entries in the array. 
-% Only suitable for MoCap Data or Norm Data types
+% Only suitable for MoCap Data or Norm Data types.
+% Based on mcplottimeseries from Mocap Toolbox v1.5
+% Adapted by Kristian Nymoen, RITMO/University of Oslo, 2019
+%
+% 
+% syntax
+% mcarrayPlotTimeseries(d, marker) % for MoCap or norm data structure
+% mcarrayPlotTimeseries(d, marker, 'dim', dim) % specifying dimensions to be plotted
+% mcarrayPlotTimeseries(d, marker, 'timetype', timetype) % axis unit
+% mcarrayPlotTimeseries(d, marker, 'plotopt', plotopt) % combined or separate plots
+% mcarrayPlotTimeseries(d, marker, 'label', label) % y-axis label 
+% mcarrayPlotTimeseries(d, marker, 'names', names) % marker names 
+% mcarrayPlotTimeseries(s, segm, 'var', var) % for segm data structure
+%
+% input parameters
+% d/s: MoCap data struct array, norm data struct array, or segm data struct array
+% marker: vector containing marker numbers or cell array containing marker names (for MoCap or norm data structure)
+% segm: body segment numbers or cell array containing segment names (for segm data structure)
+% dim: dimensions to be plotted (for MoCap data structure - default: 1)
+% var: variable to be plotted for segment segm (for segm data structure - default: 1)
+% timetype: time type used in the plot ('sec' (seconds - default) or 'frame')
+% plotopt: plotting option (for MoCap or norm data structure); 'sep' (default) or 'comb':
+%   sep: all time series  are plotted in separate subplots
+%   comb: all time series will be plotted into the same plot using different colors)
+% label: y-axis label (default: no y-axis label). X-axis label is always set, according to timetype
+%   (however, for plotting neither x-axis nor y-axis labels: 'label', 0)
+% names: if marker names (instead of numbers) are plotted in title and legend (0: numbers (default), 1: names)
+% plotMean: plot (overlay) the mean value across the struct array (0 or 1)
+% plotStd: plot (overlay) the standard deviation across the struct array (0 or 1)
+% showLines: show the individual lines – set to 0 if you want to only display the mean/std curves (0 or 1)
 %
 %
-% By Kristian Nymoen, RITMO/University of Oslo, 2019
+% output
+% Figure.
 %
+% examples
+% mcarrayPlotTimeseries(d, 2) % MoCap or norm data structure, marker 2, dim 1
+% mcarrayPlotTimeseries(d, {'Head_FL','Finger_L'}) %marker names instead of numbers (works for segments as well)
+% mcarrayPlotTimeseries(d, 1:3, 'dim', 1:3) % markers 1 to 3, dimensions 1 to 3
+% mcarrayPlotTimeseries(d, 1:3, 'dim', 3, 'timetype', 'frame') % frames as x axis unit
+% mcarrayPlotTimeseries(d, 5, 'dim', 1:3, 'plotopt', 'comb') % all in one plot, different colors per dim
+% mcarrayPlotTimeseries(d, 5, 'dim', 1:3, 'plotopt', 'comb', 'label', 'mm') % y-axis label: mm
+% mcarrayPlotTimeseries(d, 5, 'dim', 1:3, 'timetype', 'frame', 'label', 0) % no x- axis (and no y-axis) label
+% mcarrayPlotTimeseries(d, 5, 'names', 1) % marker names (instead of numbers) plotted in title and legend
+% mcarrayPlotTimeseries(s, [3 6 20], 'var', 'angle') % for segm data structure
+% mcarrayPlotTimeseries(s, 5:10, 'var', 'eucl', 'timetype', 'frame') % frames as x axis unit
+% mcarrayPlotTimeseries(s, [12 14], 'var', 'quat', 'dim', 2, 'plotopt', 'comb') % all in one plot, component 2
+% 
+%
+% 
 
 
 
