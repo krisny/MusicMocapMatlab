@@ -54,16 +54,6 @@ function mcarrayPlotTimeseries(varargin)
 
 
 
-if nargin>2
-    if (strcmp(varargin{3},'dim') + strcmp(varargin{3},'var') + strcmp(varargin{3},'timetype') + ...
-            strcmp(varargin{3},'plotopt') + strcmp(varargin{3},'label') + strcmp(varargin{3},'names')) == 0
-        disp([10, 'Warning: You are using an old version of mcplottimeseries. Please consider adapting your syntax to the new version.'])
-        disp(['For more information, check the Mocap Toolbox manual.', 10])
-        mcplottimeseries_dep(varargin{1:end});
-        return
-    end
-end
-
 d=varargin{1};
 marker=varargin{2};
 
@@ -233,7 +223,8 @@ set(0,'DefaultTextInterpreter','none') %for underscores (and such) in marker nam
 colors={[0 0.4470 0.7410],[0.8500 0.3250 0.0980],[0.9290 0.6940 0.1250],[0.4940 0.1840 0.5560],[0.4660 0.6740 0.1880],[0.3010 0.7450 0.9330],[0.6350 0.0780 0.1840]};
 
 if plotMean %lighter colors when showing mean curves
-    colors = cellfun(@(x) x*.5+.5,colors,'UniformOutput',false);
+    colors2 = colors;
+    colors  = cellfun(@(x) x*.3+.7,colors,'UniformOutput',false);
 end
 
 figure
@@ -256,6 +247,7 @@ if isfield(d(1),'type')
 
                     if showLines
                         pl=plot(t, d(di).data(:,3*p1(k)-3+p2(m)));
+                        set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                     end                   
                     
                     axis([min(t) max(t) -Inf Inf])
@@ -312,7 +304,8 @@ if isfield(d(1),'type')
                 if strcmp(plotopt, 'sep') 
                     subplot(length(p1), 1, k),hold on
                     if showLines
-                        plot(t, d(di).data(:,p1(k))) 
+                        pl = plot(t, d(di).data(:,p1(k)));
+                        set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                     end
                     
                     axis([min(t) max(t) -Inf Inf])
@@ -374,7 +367,8 @@ if isfield(d(1),'type')
                     if strcmp(plotopt, 'sep')
                         % k
                         subplot(length(p1),1,k),hold on
-                        plot(t, tmp)
+                        pl = plot(t, tmp);
+                        set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                         axis([min(t) max(t) -Inf Inf])
                         if names==0
                             title(['Segm. ' num2str(p1(k)) ' - angle'])
@@ -409,7 +403,8 @@ if isfield(d(1),'type')
                     for m=1:length(p2)
                         if strcmp(plotopt, 'sep')
                             subplot(length(p1), length(p2), length(p2)*(k-1)+m),hold on
-                            plot(t, tmp(:,p2(m)))
+                            pl = plot(t, tmp(:,p2(m)));
+                            set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                             if names==0
                                 title(['Segm. ' num2str(p1(k)) ', dim. ' num2str(p2(m)) ' - eucl']);
                             elseif names==1
@@ -489,7 +484,7 @@ if isfield(d(1),'type')
     end
     
     if plotMean
-            
+    al=1;       
     t = (1:min([d.nFrames]))';%-1 taken away as it caused time series to start at 0... [BB 20110301]
     if strcmp(timetype,'sec') 
         t = (t-1)/d(1).freq; 
@@ -507,7 +502,7 @@ if isfield(d(1),'type')
                     
                 else
                     pl=plot(t, dmean.data(:,3*p1(k)-3+p2(m)),'k','LineWidth',2);
-
+                    set(pl,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                     if names==0
                         st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m)), ' MEAN'];
                     elseif names==1
@@ -531,6 +526,7 @@ if isfield(d(1),'type')
                     plot(t, dmean.data(:,p1(k)),'k','LineWidth',2);
                 else
                     pl=plot(t, dmean.data(:,p1(k)),'k','LineWidth',2); %FIXBB110102: 'comb' also for norm data
+                    set(pl,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                     if names==0
                         st{al} = ['M. ' num2str(p1(k)), ' MEAN'];
                     elseif names==1
@@ -556,7 +552,7 @@ if isfield(d(1),'type')
     
     
     if plotStd
-            
+    al=1;    
     if strcmp(d(1).type, 'MoCap data')
         
         dstd = mcarrayStd(d);
@@ -566,13 +562,15 @@ if isfield(d(1),'type')
                 if strcmp(plotopt, 'sep')
                     subplot(length(p1), length(p2), length(p2)*(k-1)+m)
 
-                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
-                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
-                    
+                    pl1 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'k','HandleVisibility','off');
+                    pl2 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'k','HandleVisibility','off');
+                    %set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                    %set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                 else
-                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
-                    plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'k--','HandleVisibility','off');
-
+                    pl1 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'HandleVisibility','off');
+                    pl2 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'HandleVisibility','off');
+                    set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                    set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                     if names==0
                         st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m)), ' std'];
                     elseif names==1
@@ -593,12 +591,14 @@ if isfield(d(1),'type')
             for m=1%:length(p2)
                 if strcmp(plotopt, 'sep') 
                     subplot(length(p1), 1, k)
-                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'k--','HandleVisibility','off');
-                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'k--','HandleVisibility','off');
-                    
+                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'HandleVisibility','off');
+                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'HandleVisibility','off');
                 else
-                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'k--','HandleVisibility','off');
-                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'k--','HandleVisibility','off');
+                    pl1 = plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'HandleVisibility','off');
+                    pl2 = plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'HandleVisibility','off');
+                    set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                    set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                    
                     if names==0
                         st{al} = ['M. ' num2str(p1(k)), ' std'];
                     elseif names==1
