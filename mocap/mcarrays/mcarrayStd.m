@@ -10,6 +10,7 @@ function meanOut = mcarrayStd(d)
     
     dframes = min([d.nFrames]);
     dmarkers = max([d.nMarkers]);
+    ddim = size(d(1).data,2);
 
     dl = length(d);
 
@@ -17,7 +18,7 @@ function meanOut = mcarrayStd(d)
 
     for i = 1:dl
 
-        q(1:dframes,1:1:d(i).nMarkers*3,i) = d(i).data(1:dframes,:);
+        q(1:dframes,1:ddim,i) = d(i).data(1:dframes,:);
 
     end
 
