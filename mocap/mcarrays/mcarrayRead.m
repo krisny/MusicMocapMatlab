@@ -7,13 +7,17 @@ function data = mcarrayRead(datafolder)
 %
 
     if nargin == 0
-        datafolder = './data/';
+        datafolder = ['.' filesep 'data' filesep]; %look in subfolder called 'data'
     end
 
+    if ~strcmp(datafolder(end),filesep)
+        %require a slash at the end of the folder path
+        datafolder = [datafolder filesep];
+    end
 
-    files = dir([datafolder '*.mat']);
+    files = dir([datafolder '*.tsv']);
     if isempty(files)
-        files = dir([datafolder '*.tsv']);
+        files = dir([datafolder '*.mat']);
     end
     if isempty(files)
         files = dir([datafolder '*.c3d']);
@@ -26,7 +30,7 @@ function data = mcarrayRead(datafolder)
     end
 
     if isempty(files)
-        disp('no mocap files found in datafolder...')
+        disp(['Warning: No mocap files found in ' datafolder])
     end
 
     
