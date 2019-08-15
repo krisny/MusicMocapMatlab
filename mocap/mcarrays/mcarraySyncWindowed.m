@@ -85,6 +85,18 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td,selectedMa
     %extract the indecies for the rest of the dataset (excluding master)
     toSync = setdiff(1:length(data),masterIndex);
 
+    if selectedMarkers == 0
+        dataCols = 1:dim;
+    else
+        if strcmpi(xcm.type,'norm data')
+            dataCols = selectedMarkers;
+        elseif strcmpi(xcm.type,'MoCap data')
+            dataCols = selectedMarkers*3-[0 1 2]';
+            dataCols = dataCols(:)';
+        end
+    end
+
+    
     for i = toSync    
         
         if td
@@ -106,9 +118,10 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td,selectedMa
             
             allrs = nan(dim,maxlag*2+1);
             
-            
-            for j = 1:(dim)  %loop through all data columns
 
+            
+            for j = dataCols  %loop through all data columns
+k,j
                 [r,lags] = xcorr(xcm.data(k:wl+k,j),xci.data(k:wl+k,j),maxlag,'coeff');
                 allrs(j,:) = r;
 
