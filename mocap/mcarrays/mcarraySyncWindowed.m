@@ -1,9 +1,9 @@
-function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td)
+function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td,selectedMarkers)
 
 %
 % Function that synchronises a dataset of more or less similar data. e.g. multiple examples of the same choreography
 %
-% mcarraySyncWindowed(data,masterIndex,windowLength,hopSize,maxLag,timeDerivative)
+% mcarraySyncWindowed(data,masterIndex,windowLength,hopSize,maxLag,timeDerivative,selectedMarkers)
 %
 % data: An array of mocap structs 
 %
@@ -17,6 +17,8 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td)
 %
 % timeDerivative: time derivative order. Use if syncing with e.g. velocity
 % or acceleration. (Default 0 - sync using position data)
+%
+% selectedMarkers: array of marker numbers used for synchronisation. Default 0 (all)
 %
 % Sync entire dataset to one entry in the array or to the mean of the array
 % Sync strategy: 
@@ -51,7 +53,13 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td)
         td = 0;
     end
     
+    if nargin < 7
+        selectedMarkers = 0;
+    end
+    
     padframes = maxlag;
+    
+    dim = size(data(1).data,2);
     
     %isolate the master recording, to which the other recordigs are aligned
     if masterIndex == 0
@@ -70,7 +78,7 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td)
     end
 
     xcm = mcsmoothen(xcm,15);
-    xcm.data = [nan(padframes, xcm.nMarkers*3); xcm.data; nan(padframes, xcm.nMarkers*3)];
+    xcm.data = [nan(padframes, dim); xcm.data; nan(padframes, dim)];
     xcm.nFrames = xcm.nFrames+padframes*2;
     
     
@@ -88,18 +96,18 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td)
         
         
         xci = mcsmoothen(xci,15);        
-        xci.data = [nan(padframes, xci.nMarkers*3); xci.data; nan(padframes, xci.nMarkers*3)];
+        xci.data = [nan(padframes, dim); xci.data; nan(padframes, dim)];
         xci.nFrames = xci.nFrames+padframes*2;
         
         syncCandidates = [];
         lagConfidences = [];
         
-        for k = padframes:hop:(xcm.nFrames-padframes-wl) %loop through overlapping time windows
+        for k = padframes:hop:(xcm.nFrames-padframes-wl-1) %loop through overlapping time windows
             
-            allrs = nan(xci.nMarkers*3,maxlag*2+1);
+            allrs = nan(dim,maxlag*2+1);
             
             
-            for j = 1:(xci.nMarkers*3)  %loop through all data columns
+            for j = 1:(dim)  %loop through all data columns
 
                 [r,lags] = xcorr(xcm.data(k:wl+k,j),xci.data(k:wl+k,j),maxlag,'coeff');
                 allrs(j,:) = r;
