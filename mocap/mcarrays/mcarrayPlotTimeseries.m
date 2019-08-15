@@ -484,14 +484,77 @@ if isfield(d(1),'type')
     end
     
     if plotMean
-    al=1;       
+    
     t = (1:min([d.nFrames]))';%-1 taken away as it caused time series to start at 0... [BB 20110301]
     if strcmp(timetype,'sec') 
         t = (t-1)/d(1).freq; 
     end
+    
+    dmean = mcarrayMean(d);
+    
+    if plotStd
+        al=1;    
+        if strcmp(d(1).type, 'MoCap data')
+
+            dstd = mcarrayStd(d);
+
+            for k=1:length(p1)
+                for m=1:length(p2)
+                    if strcmp(plotopt, 'sep')
+                        subplot(length(p1), length(p2), length(p2)*(k-1)+m)
+
+                        %pl1 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'k','HandleVisibility','off');
+                        %pl2 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'k','HandleVisibility','off');
+                        patch([t;flip(t)],[dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m));flip(dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)))],[.1 .1 .1],'FaceAlpha',0.2)
+                        %set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                        %set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                    else
+                        %pl1 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'HandleVisibility','off');
+                        %pl2 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'HandleVisibility','off');
+                        patch([t;flip(t)],[dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m));flip(dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)))],colors2{mod(al-1,length(colors))+1},'FaceAlpha',0.3)
+                        %set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                        %set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
+                        al=al+1;
+                        hold on
+                    end
+                end
+            end
+        elseif strcmp(d(1).type, 'norm data')
+
+            dstd = mcarrayStd(d);
+
+            al=1;%amount of lines - for 'comb' plotting
+            %plot(t, dmean.data(:,p1),'k','LineWidth',2);
+            for k=1:length(p1)
+                for m=1%:length(p2)
+                    if strcmp(plotopt, 'sep') 
+                        subplot(length(p1), 1, k)
+                       % plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'k','HandleVisibility','off');
+                       % plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'k','HandleVisibility','off');
+
+                       % h = area(,,dstd.data(:,p1(k)),dstd.data(:,p1(k))],min(dmean.data(:,p1(k))-dstd.data(:,p1(k))));%
+                        patch([t;flip(t)],[dmean.data(:,p1(k))-dstd.data(:,p1(k));flip(dmean.data(:,p1(k))+dstd.data(:,p1(k)))],[.1 .1 .1],'FaceAlpha',0.2)
+                    else
+                        patch([t;flip(t)],[dmean.data(:,p1(k))-dstd.data(:,p1(k));flip(dmean.data(:,p1(k))+dstd.data(:,p1(k)))],colors2{mod(al-1,length(colors))+1},'FaceAlpha',0.3)
+                        
+                        
+                        al=al+1;
+                        hold on
+                    end
+                end
+            end
+
+        elseif strcmp(d(1).type, 'segm data')
+
+            disp('plotting of array SD not implemented for segment data')
+        end
+
+    end %of if plotstd
+    
+    al=1;       
     if strcmp(d(1).type, 'MoCap data')
         
-        dmean = mcarrayMean(d);
+        
 
         for k=1:length(p1)
             for m=1:length(p2)
@@ -504,9 +567,9 @@ if isfield(d(1),'type')
                     pl=plot(t, dmean.data(:,3*p1(k)-3+p2(m)),'k','LineWidth',2);
                     set(pl,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                     if names==0
-                        st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m)), ' MEAN'];
+                        st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m))];
                     elseif names==1
-                        st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m)), ' MEAN'];
+                        st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m))];
                     end 
                     al=al+1;
                     hold on
@@ -515,7 +578,7 @@ if isfield(d(1),'type')
         end
     elseif strcmp(d(1).type, 'norm data')
         
-        dmean = mcarrayMean(d);
+        
         
         al=1;%amount of lines - for 'comb' plotting
         %plot(t, dmean.data(:,p1),'k','LineWidth',2);
@@ -528,9 +591,9 @@ if isfield(d(1),'type')
                     pl=plot(t, dmean.data(:,p1(k)),'k','LineWidth',2); %FIXBB110102: 'comb' also for norm data
                     set(pl,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                     if names==0
-                        st{al} = ['M. ' num2str(p1(k)), ' MEAN'];
+                        st{al} = ['M. ' num2str(p1(k))];
                     elseif names==1
-                        st{al} = ['M. ' char(d(di).markerName{p1(k)}), ' MEAN'];
+                        st{al} = ['M. ' char(d(di).markerName{p1(k)})];
                     end
 
                     al=al+1;
@@ -551,72 +614,7 @@ if isfield(d(1),'type')
     
     
     
-    if plotStd
-    al=1;    
-    if strcmp(d(1).type, 'MoCap data')
-        
-        dstd = mcarrayStd(d);
 
-        for k=1:length(p1)
-            for m=1:length(p2)
-                if strcmp(plotopt, 'sep')
-                    subplot(length(p1), length(p2), length(p2)*(k-1)+m)
-
-                    pl1 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'k','HandleVisibility','off');
-                    pl2 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'k','HandleVisibility','off');
-                    %set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
-                    %set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
-                else
-                    pl1 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))-dstd.data(:,3*p1(k)-3+p2(m)),'HandleVisibility','off');
-                    pl2 = plot(t, dmean.data(:,3*p1(k)-3+p2(m))+dstd.data(:,3*p1(k)-3+p2(m)),'HandleVisibility','off');
-                    set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
-                    set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
-                    if names==0
-                        st{al} = ['M. ' num2str(p1(k)) ', dim. ' num2str(p2(m)), ' std'];
-                    elseif names==1
-                        st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m)), ' std'];
-                    end 
-                    al=al+1;
-                    hold on
-                end
-            end
-        end
-    elseif strcmp(d(1).type, 'norm data')
-        
-        dstd = mcarrayStd(d);
-        
-        al=1;%amount of lines - for 'comb' plotting
-        %plot(t, dmean.data(:,p1),'k','LineWidth',2);
-        for k=1:length(p1)
-            for m=1%:length(p2)
-                if strcmp(plotopt, 'sep') 
-                    subplot(length(p1), 1, k)
-                    plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'k','HandleVisibility','off');
-                    plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'k','HandleVisibility','off');
-                else
-                    pl1 = plot(t, dmean.data(:,p1(k))-dstd.data(:,p1(k)),'HandleVisibility','off');
-                    pl2 = plot(t, dmean.data(:,p1(k))+dstd.data(:,p1(k)),'HandleVisibility','off');
-                    set(pl1,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
-                    set(pl2,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
-                    
-                    if names==0
-                        st{al} = ['M. ' num2str(p1(k)), ' std'];
-                    elseif names==1
-                        st{al} = ['M. ' char(d(di).markerName{p1(k)}), ' std'];
-                    end
-
-                    al=al+1;
-                    hold on
-                end
-            end
-        end
-    
-    elseif strcmp(d(1).type, 'segm data')
-        
-        disp('plotting of array SD not implemented for segment data')
-    end
-                
-    end %of if plotstd
     
     
     
