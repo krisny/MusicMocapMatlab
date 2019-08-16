@@ -1,4 +1,4 @@
-function entries = mcarrayGetEntry(d,queryType,query,varargin)
+function entries = mcarrayGetElements(d,queryType,query,varargin)
 % 
 % Selects those entries of an array that satisfy a condition
 %
