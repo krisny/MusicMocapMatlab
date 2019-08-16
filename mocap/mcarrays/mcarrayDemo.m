@@ -115,10 +115,10 @@ data = mcarraySyncWindowed(data);
 % the extracted syncpoints. For this we use the mcarrayTrimSyncedData
 % function.
 
-data = mcarrayTrimSyncedData(datas);
+data = mcarrayTrimSyncedData(data);
 
 % Let's also plot the third dimension of a selection of markers for our synced data:
-mcarrayPlotTimeseries([datast],[1 5 9 12 16 20],'dim',3,'names',1);
+mcarrayPlotTimeseries([data],[1 5 9 12 16 20],'dim',3,'names',1);
 
 
 %%
