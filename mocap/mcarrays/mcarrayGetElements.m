@@ -3,16 +3,16 @@ function entries = mcarrayGetElements(d,queryType,query,varargin)
 % Selects those entries of an array that satisfy a condition
 %
 %
-% entries = mcarrayGetEntry(data,queryType,query,'name','value')
+% entries = mcarrayGetElements(data,queryType,query,'name','value')
 %
 %
 % Examples:
-%  mcarrayGetEntry(data,'namecontains','Subject1')
-%  mcarrayGetEntry(data,'namecontains','Subject1','outputtype','entries')
-%  mcarrayGetEntry(data,'namecontains','subJECT1','ignoreCase',0)
-%  mcarrayGetEntry(data,'nFrames',1000)
-%  mcarrayGetEntry(data,'type','norm data')
-%  mcarrayGetEntry(data,'type','segm data','outputtype','entries')
+%  mcarrayGetElements(data,'namecontains','Subject1')
+%  mcarrayGetElements(data,'namecontains','Subject1','outputtype','entries')
+%  mcarrayGetElements(data,'namecontains','subJECT1','ignoreCase',0)
+%  mcarrayGetElements(data,'nFrames',1000)
+%  mcarrayGetElements(data,'type','norm data')
+%  mcarrayGetElements(data,'type','segm data','outputtype','entries')
 %
 % By Kristian Nymoen, RITMO/University of Oslo, 2019
 %

@@ -114,14 +114,14 @@ function data = mcarraySyncWindowed(data,masterIndex,wl,hop,maxlag,td,selectedMa
         syncCandidates = [];
         lagConfidences = [];
         
-        for k = padframes:hop:(xcm.nFrames-padframes-wl-1) %loop through overlapping time windows
+        for k = padframes:hop:(min(xcm.nFrames,xci.nFrames)-wl) %loop through overlapping time windows
             
             allrs = nan(dim,maxlag*2+1);
             
 
             
             for j = dataCols  %loop through all data columns
-k,j
+%k,j
                 [r,lags] = xcorr(xcm.data(k:wl+k,j),xci.data(k:wl+k,j),maxlag,'coeff');
                 allrs(j,:) = r;
 

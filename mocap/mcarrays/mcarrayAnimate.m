@@ -28,7 +28,7 @@ end
 [a,apar2] = mcarrayMerge(q,apar,spacing,'grid',gridsize);
 
 
-mcanimate(a,apar2)
+mcanimate(a,apar2);
 
 
 

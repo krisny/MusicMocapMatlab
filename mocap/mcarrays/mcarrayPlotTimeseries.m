@@ -217,6 +217,7 @@ end
 
 p1=marker;
 p2=dim;
+tmax = [];
 
 set(0,'DefaultTextInterpreter','none') %for underscores (and such) in marker names
 
@@ -237,6 +238,7 @@ if isfield(d(1),'type')
     if strcmp(timetype,'sec') 
         t = (t-1)/d(di).freq; 
     end
+    tmax = max([t; tmax]);
     if strcmp(d(di).type, 'MoCap data')
 
         al=1;%amount of lines - for 'comb' plotting
@@ -250,7 +252,7 @@ if isfield(d(1),'type')
                         set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
                     end                   
                     
-                    axis([min(t) max(t) -Inf Inf])
+                    axis([min(t) tmax -Inf Inf])
                     if names==0
                         title(['Marker ' num2str(p1(k)) ', dim. ' num2str(p2(m))])
                     elseif names==1
@@ -277,7 +279,7 @@ if isfield(d(1),'type')
                     elseif names==1
                         title(['Marker [' num2str(p1) '], dim. [' num2str(p2) ']'])
                     end 
-                    axis([min(t) max(t) -Inf Inf])
+                    axis([min(t) tmax -Inf Inf])
                     
                     hold on
                 end
@@ -308,7 +310,7 @@ if isfield(d(1),'type')
                         set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                     end
                     
-                    axis([min(t) max(t) -Inf Inf])
+                    axis([min(t) tmax -Inf Inf])
                     if names==0
                         title(['Marker ' num2str(p1(k)) ', norm data'])
                     elseif names==1
@@ -320,7 +322,7 @@ if isfield(d(1),'type')
                     if showLines
                         pl=plot(t, d(di).data(:,p1(k))); %FIXBB110102: 'comb' also for norm data
                     
-                        axis([min(t) max(t) -Inf Inf])
+                        axis([min(t) tmax -Inf Inf])
                         set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
 
     %                     title(['Marker [' num2str(p1) '], norm data'])
@@ -369,7 +371,7 @@ if isfield(d(1),'type')
                         subplot(length(p1),1,k),hold on
                         pl = plot(t, tmp);
                         set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
-                        axis([min(t) max(t) -Inf Inf])
+                        axis([min(t) tmax -Inf Inf])
                         if names==0
                             title(['Segm. ' num2str(p1(k)) ' - angle'])
                         elseif names==1
@@ -378,7 +380,7 @@ if isfield(d(1),'type')
                     else
                         hold on
                         pl=plot(t, tmp); %FIXBB201202010: 'comb' also for segm data
-                        axis([min(t) max(t) -Inf Inf])
+                        axis([min(t) tmax -Inf Inf])
                         set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                         if names==0
                             title(['Segm. [' num2str(p1) '] - angle'])
@@ -410,11 +412,11 @@ if isfield(d(1),'type')
                             elseif names==1
                                 title(['Segm. ' char(d(di).segmentName{p1(k)}) ', dim. ' num2str(p2(m)) ' - eucl'])
                             end
-                            axis([min(t) max(t) -Inf Inf])
+                            axis([min(t) tmax -Inf Inf])
                         else
                             hold on
                             pl=plot(t, tmp(:,p2(m))); %FIXBB201202010: 'comb' also for segm data
-                            axis([min(t) max(t) -Inf Inf])
+                            axis([min(t) tmax -Inf Inf])
                             set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                             if names==0
                                 title(['Segm. [' num2str(p1) '], dim. [' num2str(p2) '] - eucl'])
@@ -446,11 +448,11 @@ if isfield(d(1),'type')
                             elseif names==1
                                 title(['Segm. ' char(d(di).segmentName{p1(k)}) ', comp. ' num2str(p2(m)) ' - quat'])
                             end
-                            axis([min(t) max(t) -Inf Inf])
+                            axis([min(t) tmax -Inf Inf])
                         else
                             hold on
                             pl=plot(t, tmp(:,p2(m))); %FIXBB201202010: 'comb' also for segm data
-                            axis([min(t) max(t) -Inf Inf])
+                            axis([min(t) tmax -Inf Inf])
                             set(pl,'color',colors{mod(al-1,length(colors))+1}) %al has 4 colors, should start over with blue after 7 lines
                             if names==0
                                 title(['Segm. [' num2str(p1) '], comp. [' num2str(p2) '] - quat'])
@@ -490,6 +492,11 @@ if isfield(d(1),'type')
         t = (t-1)/d(1).freq; 
     end
     
+    if ~showLines
+        tmax = max(t);
+    end
+
+            
     dmean = mcarrayMean(d);
     
     if plotStd
@@ -534,8 +541,10 @@ if isfield(d(1),'type')
 
                        % h = area(,,dstd.data(:,p1(k)),dstd.data(:,p1(k))],min(dmean.data(:,p1(k))-dstd.data(:,p1(k))));%
                         patch([t;flip(t)],[dmean.data(:,p1(k))-dstd.data(:,p1(k));flip(dmean.data(:,p1(k))+dstd.data(:,p1(k)))],[.1 .1 .1],'FaceAlpha',0.2)
+                        axis([min(t) tmax -Inf Inf])
                     else
                         patch([t;flip(t)],[dmean.data(:,p1(k))-dstd.data(:,p1(k));flip(dmean.data(:,p1(k))+dstd.data(:,p1(k)))],colors2{mod(al-1,length(colors))+1},'FaceAlpha',0.3)
+                        axis([min(t) tmax -Inf Inf])
                         
                         
                         al=al+1;
@@ -562,7 +571,7 @@ if isfield(d(1),'type')
                     subplot(length(p1), length(p2), length(p2)*(k-1)+m)
 
                     pl=plot(t, dmean.data(:,3*p1(k)-3+p2(m)),'k','LineWidth',2);
-                    
+                    axis([min(t) tmax -Inf Inf])
                 else
                     pl=plot(t, dmean.data(:,3*p1(k)-3+p2(m)),'k','LineWidth',2);
                     set(pl,'color',colors2{mod(al-1,length(colors))+1}) %al has 7 colors, should start over with blue after 7 lines
@@ -571,6 +580,7 @@ if isfield(d(1),'type')
                     elseif names==1
                         st{al} = ['M. ' char(d(di).markerName{p1(k)}) ', dim. ' num2str(p2(m))];
                     end 
+                    axis([min(t) tmax -Inf Inf])
                     al=al+1;
                     hold on
                 end
